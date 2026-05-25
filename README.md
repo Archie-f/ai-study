@@ -4,16 +4,25 @@ A hands-on learning project documenting my path from Software Test Engineer to A
 
 ## Structure
 
+### week-00 — Pre-Roadmap (Days 1–5 + Week 01 Day 01)
+
 | Folder | What I built |
 |--------|-------------|
-| `day-02/` | First steps with Python and local LLMs via Ollama |
-| `day-03/` | Stateful chatbot with conversation memory |
-| `day-04/` | Upgraded chatbot with system prompts |
-| `day-05-review/` | Refactored chatbot — structured messages API, sliding window memory, error handling |
+| `week-00/day-002/` | First steps with Python and local LLMs via Ollama |
+| `week-00/day-003/` | Stateful chatbot with conversation memory |
+| `week-00/day-004/` | Upgraded chatbot with system prompts |
+| `week-00/day-005-review/` | Refactored chatbot — `/api/chat`, sliding window memory, error handling |
+| `week-00/day-005-review/day-005-review-and-refine.py` | Week 01 Day 01: added type hints, `ChatMessage` & `ChatConfig` dataclasses, `build_messages()` |
+
+### notes/
+
+| File | Description |
+|------|-------------|
+| `notes/AI-Study-Comprehensive-Notes.docx` | Living study notes — updated after every session |
 
 ## Stack
 
-- Python 3.10
+- Python 3.14
 - [Ollama](https://ollama.com) — local LLM runner
 - Llama3 — local model
 
@@ -21,4 +30,4 @@ A hands-on learning project documenting my path from Software Test Engineer to A
 
 1. Install and start Ollama: `ollama serve`
 2. Pull the model: `ollama pull llama3`
-3. Run: `python3 day-05-review/day-05-review-and-refine.py`
+3. Run: `python3 week-00/day-005-review/day-005-review-and-refine.py`
