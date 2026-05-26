@@ -1,0 +1,2 @@
+[console_scripts]
+ai-chat = ai_chatbot.cli:main
