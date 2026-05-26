@@ -60,8 +60,9 @@ ai-study/
 ## Start-of-day checklist (do this at the start of every study session)
 1. Read the current day's entry in `week-01-study-plan.docx` (at `/Users/archie/Documents/Claude/Projects/AI Study/`)
 2. Check if the `week-XX` branch exists on GitHub — if not, remind Akif to create it
-3. Read the existing `day-XX-takeaway-notes.docx` if it exists
-4. Read `AI-Study-Comprehensive-Notes.docx` WHERE I LEFT OFF block to know current state
+3. Read `AI-Study-Comprehensive-Notes.docx` WHERE I LEFT OFF block to know current state
+4. If `day-XX-takeaway-notes.docx` does NOT exist yet — prepare it now (before the session starts), modelled on `day-01-takeaway-notes.docx` style
+5. If `day-XX-takeaway-notes.docx` already exists — read it so you know what was prepared
 
 ## End-of-day checklist (do this at the end of every study session)
 1. Update `day-XX-takeaway-notes.docx` — add real Q&A from the session, fix anything that was wrong
