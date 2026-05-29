@@ -1,5 +1,7 @@
+import asyncio
 from dataclasses import dataclass
-import requests
+
+import httpx
 
 url: str = "http://localhost:11434/api/chat"
 model: str = "llama3"
@@ -58,24 +60,25 @@ def append_message(
 def limit_message_history(history: MessageParam) -> MessageParam:
     return history[-8:]
 
-def send_request_to_model(prompt: MessageParam) -> str:
+async def send_request_to_model(prompt: MessageParam) -> str:
     try:
-        response = requests.post(
-            url,
-            json={
-                "model": model,
-                "messages": prompt,
-                "stream": False
-            }
-        )
-        # Catch HTTP errors like 404, 500
-        response.raise_for_status()
-        # Get content from the response. Raise a friendly message if there's none.
-        return response.json().get("message", {}).get("content", "Sorry, I didn't get a response. Please try again.")
-
-    except requests.exceptions.ConnectionError:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                url,
+                json = {
+                    "model": model,
+                    "messages": prompt,
+                    "stream": False
+                },
+                timeout=60.0
+            )
+            # Catch HTTP errors like 404, 500
+            response.raise_for_status()
+            # Get content from the response. Raise a friendly message if there's none.
+            return response.json().get("message", {}).get("content", "Sorry, I didn't get a response. Please try again.")
+    except httpx.ConnectError:
         return "Error: Could not connect to Ollama. Is it running?"
-    except requests.exceptions.HTTPError as err:
+    except httpx.HTTPStatusError as err:
         return f"Error: Model returned error: '{err.response.text}'"
 
 def chat() -> None:
@@ -94,7 +97,7 @@ def chat() -> None:
 
         append_message(message_history, user_input, is_user_input=True)
         prompt = system_message + limit_message_history(message_history)
-        ai_reply = send_request_to_model(prompt)
+        ai_reply = asyncio.run(send_request_to_model(prompt))
 
         print(f"AI: {ai_reply}")
         append_message(message_history, ai_reply, is_user_input=False)
