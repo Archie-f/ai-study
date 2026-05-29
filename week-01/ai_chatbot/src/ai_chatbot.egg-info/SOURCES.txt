@@ -1,6 +1,8 @@
 pyproject.toml
 src/ai_chatbot/__init__.py
+src/ai_chatbot/async_chat.py
 src/ai_chatbot/chat.py
+src/ai_chatbot/cli.py
 src/ai_chatbot.egg-info/PKG-INFO
 src/ai_chatbot.egg-info/SOURCES.txt
 src/ai_chatbot.egg-info/dependency_links.txt
