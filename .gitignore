@@ -5,3 +5,6 @@ __pycache__/
 .DS_Store
 notes/
 CLAUDE.md
+.env
+.env.local
+*.env
