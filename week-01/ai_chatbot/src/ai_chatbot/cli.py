@@ -68,7 +68,7 @@ def chat(model: str = typer.Option(MODEL, help="The model to use."),
 
         if user_input.lower() == "quit" or user_input.lower() == "bye":
             typer.echo(AI_GOODBYE_MESSAGE)
-            append_message(messages, AI_READY_MESSAGE, is_user_input=True)
+            append_message(messages, user_input, is_user_input=True)
             append_message(messages, AI_GOODBYE_MESSAGE, is_user_input=False)
             break
 
