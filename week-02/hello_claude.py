@@ -1,3 +1,9 @@
+"""
+hello_claude.py — First API call to Anthropic Claude.
+
+Demonstrates: dotenv setup, system prompt, token usage tracking.
+"""
+
 from dotenv import load_dotenv
 import anthropic
 from anthropic.types import MessageParam
@@ -31,7 +37,10 @@ message = client.messages.create(
     messages= msgs_ses_b
 )
 
+# Print message content as plain text
 print(message.content[0].text)
+
+# Print input and output token counts with the stop reason
 print(f"\nTokens:\n- Input: {message.usage.input_tokens}"
       f"\n- Output: {message.usage.output_tokens}"
       f"\n- Stop Reason: {message.stop_reason}")
