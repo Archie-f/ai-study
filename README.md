@@ -1,5 +1,7 @@
 # ai-study
 
+![CI](https://github.com/Archie-f/ai-study/actions/workflows/ci.yml/badge.svg)
+
 ## What
 A week-by-week log of my AI Engineer transition: scripts, notes, and
 experiments covering Python for AI, LLM APIs, RAG, agents, and deployment.
