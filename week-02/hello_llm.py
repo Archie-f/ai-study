@@ -10,6 +10,24 @@ providers: list[str] = ["ollama", "claude", "groq"]
 prompt: str = "Say hello in one sentence."
 
 def ask(content: str, provider: str = "claude") -> str:
+    """Send a prompt to an LLM provider and return the reply.
+
+        Supports three providers: "claude" (Anthropic), "groq" (Groq cloud),
+        and "ollama" (local). Provider credentials are loaded from .env via
+        python-dotenv.
+
+        Args:
+            content: The user prompt to send.
+            provider: The LLM backend to use. One of "claude", "groq",
+                "ollama". Defaults to "claude".
+
+        Returns:
+            A formatted string containing the provider name, the model reply,
+            and token usage. On error, returns an error message string.
+
+        Raises:
+            ValueError: If an unsupported provider name is given.
+        """
     max_token: int = 150
     message = [
         {"role": "user", "content": content}
