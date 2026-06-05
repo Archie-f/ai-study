@@ -78,6 +78,6 @@ Token usage data: {token_data if not provider == "claude" else f"Input: {token_d
     except Exception as e:
         return f"{provider}: Error | {e}"
 
-
-for provider_model in providers:
-    print(ask(prompt, provider_model))
+if __name__ == "__main__":
+    for provider_model in providers:
+        print(ask(prompt, provider_model))
