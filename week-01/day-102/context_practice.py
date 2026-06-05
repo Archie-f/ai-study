@@ -1,7 +1,5 @@
 import time
 from contextlib import contextmanager
-from pathlib import Path
-
 
 # Exercise 1
 # Type the DatabaseConnection class into a Python file called context_practice.py.
