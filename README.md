@@ -30,15 +30,22 @@ python week-02/hello_llm.py
 ## Weekly Progress
 
 | Week | Topic | Status |
-|------|-------|-------|
-| Week 01 | Python for AI, packaging, async CLI |  Done |
-| Week 02 | LLM APIs, Git workflow, CI |  In Progress |
+|------|-------|--------|
+| Week 01 | Python for AI, packaging, async CLI | Done   |
+| Week 02 | LLM APIs, Git workflow, CI | Done   |
 
-### What I Learned
-- Type hints, dataclasses, async/await, and packaging with pyproject.toml (Week 01)
+## What I Learned
+### Week 01
+- Type hints and dataclasses — adding Java-style structure to Python without the boilerplate 
+- Packaging a CLI tool with pyproject.toml — installable with pip install -e .
+- async/await with httpx — non-blocking HTTP calls to a local LLM
+- Building a typed CLI with Typer — flags, arguments, and --help out of the box
+- Refactoring a working chatbot into a clean, installable package
+
+### Week 02
 - Managing API secrets with python-dotenv — never hardcode keys
 - Building a unified ask() function that works across Claude, Groq, and Ollama
 - The messages[] format shared by all modern LLM APIs
 - Git rebase and interactive history cleanup
-- GitHub Actions CI — automated linting and tests on every push
+- GitHub Actions CI — automated linting (``` ruff ```) and tests (``` pytest ```) on every push
 
