@@ -27,6 +27,13 @@ cp .env.example .env   # add your API keys
 python week-02/hello_llm.py
 ```
 
+## Weekly Progress
+
+| Week | Topic | Status |
+|------|-------|-------|
+| Week 01 | Python for AI, packaging, async CLI |  Done |
+| Week 02 | LLM APIs, Git workflow, CI |  In Progress |
+
 ### What I Learned
 - Type hints, dataclasses, async/await, and packaging with pyproject.toml (Week 01)
 - Managing API secrets with python-dotenv — never hardcode keys

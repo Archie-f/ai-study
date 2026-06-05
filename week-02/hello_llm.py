@@ -9,14 +9,14 @@ load_dotenv()
 providers: list[str] = ["ollama", "claude", "groq"]
 prompt: str = "Say hello in one sentence."
 
-def ask(prompt: str, provider: str = "claude") -> str:
+def ask(content: str, provider: str = "claude") -> str:
     max_token: int = 150
     message = [
-        {"role": "user", "content": prompt}
+        {"role": "user", "content": content}
     ]
 
     try:
-        if provider == "ollama":
+        if provider.lower() == "ollama":
             client = OpenAI(
                 base_url=os.getenv("OLLAMA_BASE_URL"),
                 api_key=os.getenv("OLLAMA_API_KEY"),
@@ -28,7 +28,7 @@ def ask(prompt: str, provider: str = "claude") -> str:
             )
             ai_reply = response.choices[0].message.content
             token_data = response.usage.total_tokens
-        elif provider == "groq":
+        elif provider.lower() == "groq":
             client = OpenAI(
                 base_url=os.getenv("GROQ_BASE_URL"),
                 api_key=os.getenv("GROQ_API_KEY"),
@@ -40,7 +40,7 @@ def ask(prompt: str, provider: str = "claude") -> str:
             )
             ai_reply = response.choices[0].message.content
             token_data = response.usage.total_tokens
-        elif provider == "claude":
+        elif provider.lower() == "claude":
             client = anthropic.Anthropic()
             response = client.messages.create(
                 model=os.getenv("ANTHROPIC_MODEL_NAME"),
