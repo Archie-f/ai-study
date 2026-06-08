@@ -49,3 +49,5 @@ python week-02/hello_llm.py
 - Git rebase and interactive history cleanup
 - GitHub Actions CI — automated linting (``` ruff ```) and tests (``` pytest ```) on every push
 
+### Week 03
+- Rebuilt the chatbot from scratch, typed, documented, and with proper error handling
