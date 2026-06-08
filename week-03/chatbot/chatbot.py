@@ -37,15 +37,23 @@ def send(history: MessageParam, model: str = "llama3", host: str = "http://local
         host: Model server url.
 
     Returns:
-        The assistant's reply to the message as a string.
+        The assistant's reply to the message as a string. On error, returns an error message string.
     """
 
     client = ollama.Client(host)
-    response = client.chat(
-        model=model,
-        messages=history
-    )
-    return response["message"]['content']
+
+    try:
+        response = client.chat(
+            model=model,
+            messages=history
+        )
+        return response["message"]['content']
+    except ollama.ResponseError as err:
+        print(f"Sorry, Ollama has encountered a problem: {err}")
+        return "Error: Something went wrong with the model."
+    except Exception as e:
+        print(f"Sorry, an error occurred: {e}.")
+        return "Error: Something went wrong. Is Ollama still running?"
 
 def run(model: str = "llama3", host: str = "http://localhost:11434", max_turns: int = 50) -> None:
     """Runs the chat loop. Reads user input, calls send(), and prints the conversation.
