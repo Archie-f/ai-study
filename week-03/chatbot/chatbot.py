@@ -3,11 +3,15 @@
 - Sends messages to Ollama
 - Runs the chat loop and prints the conversation
 """
+import logging
 import ollama
+
+logger = logging.getLogger(__name__)
 
 type MessageParam = list[dict[str, str]]
 
 EXIT_PHRASES = {'quit', 'exit', 'bye', 'q'}
+AI_WELCOME_MESSAGE = "Session started. Welcome to Ollama. How can I help you?"
 AI_GOODBYE_MESSAGE = "Goodbye!"
 ASSISTANT = "assistant"
 ENTER_MESSAGE_NOTIFICATION = "Assistant: Please enter a message"
@@ -43,16 +47,18 @@ def send(history: MessageParam, model: str = "llama3", host: str = "http://local
     client = ollama.Client(host)
 
     try:
+        logger.debug("Sending message: '%d' to the model: '%s'.", len(history) ,model)
         response = client.chat(
             model=model,
             messages=history
         )
+        logger.info("Ollama response: %d", len(response["message"]['content']))
         return response["message"]['content']
     except ollama.ResponseError as err:
-        print(f"Sorry, Ollama has encountered a problem: {err}")
+        logger.error("Sorry, Ollama has encountered a problem: %s", err)
         return "Error: Something went wrong with the model."
     except Exception as e:
-        print(f"Sorry, an error occurred: {e}.")
+        logger.error("Sorry, an error occurred: %s.", e)
         return "Error: Something went wrong. Is Ollama still running?"
 
 def run(model: str = "llama3", host: str = "http://localhost:11434", max_turns: int = 50) -> None:
@@ -67,6 +73,7 @@ def run(model: str = "llama3", host: str = "http://localhost:11434", max_turns: 
     message_history = [{"role": "system", "content": SYSTEM_PROMPT}]
     count = 0
 
+    logger.info(AI_WELCOME_MESSAGE)
     while count < max_turns:
         user_input = input("You: ").strip()
 
@@ -86,4 +93,6 @@ def run(model: str = "llama3", host: str = "http://localhost:11434", max_turns: 
 
         count += 1
     else:
-        print(f"Session reached to limit of {max_turns}. Session ended. {AI_GOODBYE_MESSAGE}")
+        print(f"Session reached to limit of {max_turns}.")
+
+    logger.info("Session ended. %s", AI_GOODBYE_MESSAGE)
