@@ -6,6 +6,8 @@
 import logging
 import ollama
 
+from .config import ChatConfig
+
 logger = logging.getLogger(__name__)
 
 type MessageParam = list[dict[str, str]]
@@ -16,10 +18,6 @@ AI_GOODBYE_MESSAGE = "Goodbye!"
 ASSISTANT = "assistant"
 ENTER_MESSAGE_NOTIFICATION = "Assistant: Please enter a message"
 USER = "user"
-SYSTEM_PROMPT = (
-    'You are a helpful assistant. '
-    'Be concise. Answer in plain English.'
-)
 
 def add_message(history: MessageParam, role: str, content:str) -> None:
     """Adds a message to the chat history.
@@ -32,27 +30,26 @@ def add_message(history: MessageParam, role: str, content:str) -> None:
     """
     history.append({"role": role, "content": content})
 
-def send(history: MessageParam, model: str = "llama3", host: str = "http://localhost:11434") -> str:
+def send(history: MessageParam, config: ChatConfig) -> str:
     """Sends the chat history to Ollama.
 
     Args:
         history: Messages stored in the chat history.
-        model: Model name that is used to send the chat history.
-        host: Model server url.
+        config: ChatConfig object.
 
     Returns:
         The assistant's reply to the message as a string. On error, returns an error message string.
     """
 
-    client = ollama.Client(host)
+    client = ollama.Client(config.host)
 
     try:
-        logger.debug("Sending message: '%d' to the model: '%s'.", len(history) ,model)
+        logger.debug("Sending message: '%d' to the model: '%s'.", len(history) ,config.model)
         response = client.chat(
-            model=model,
+            model=config.model,
             messages=history
         )
-        logger.info("Ollama response: %d", len(response["message"]['content']))
+        logger.info("Ollama response: %d chars.", len(response["message"]['content']))
         return response["message"]['content']
     except ollama.ResponseError as err:
         logger.error("Sorry, Ollama has encountered a problem: %s", err)
@@ -61,20 +58,18 @@ def send(history: MessageParam, model: str = "llama3", host: str = "http://local
         logger.error("Sorry, an error occurred: %s.", e)
         return "Error: Something went wrong. Is Ollama still running?"
 
-def run(model: str = "llama3", host: str = "http://localhost:11434", max_turns: int = 50) -> None:
+def run(config: ChatConfig) -> None:
     """Runs the chat loop. Reads user input, calls send(), and prints the conversation.
 
     Args:
-        model: Model name that is used to send the chat history.
-        host: Model server url.
-        max_turns: Maximum number of conversation turns before the loop ends.
+        config: ChatConfig object.
     """
 
-    message_history = [{"role": "system", "content": SYSTEM_PROMPT}]
+    message_history = [{"role": "system", "content": config.system_prompt}]
     count = 0
 
     logger.info(AI_WELCOME_MESSAGE)
-    while count < max_turns:
+    while count < config.max_turns:
         user_input = input("You: ").strip()
 
         if not user_input:
@@ -86,13 +81,13 @@ def run(model: str = "llama3", host: str = "http://localhost:11434", max_turns: 
             break
 
         add_message(message_history, role=USER, content=user_input)
-        ai_reply = send(message_history, model=model, host=host)
+        ai_reply = send(message_history, config)
         add_message(message_history, role=ASSISTANT, content=ai_reply)
         print(f"{ASSISTANT.capitalize()}: {ai_reply}")
         print("---")
 
         count += 1
     else:
-        print(f"Session reached to limit of {max_turns}.")
+        print(f"Session reached to limit of {config.max_turns} turns.")
 
     logger.info("Session ended. %s", AI_GOODBYE_MESSAGE)
