@@ -51,3 +51,5 @@ python week-02/hello_llm.py
 
 ### Week 03
 - Rebuilt the chatbot from scratch, typed, documented, and with proper error handling
+- Added structured logging with Python's logging module — levels, handlers, latency timing
+- Introduced ChatConfig dataclass — single config object replacing all magic strings
