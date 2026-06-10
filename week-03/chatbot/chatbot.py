@@ -4,6 +4,8 @@
 - Runs the chat loop and prints the conversation
 """
 import logging
+import time
+
 import ollama
 
 from .config import ChatConfig
@@ -42,20 +44,22 @@ def send(history: MessageParam, config: ChatConfig) -> str:
     """
 
     client = ollama.Client(config.host)
-
+    start = time.monotonic()
     try:
-        logger.debug("Sending message: '%d' to the model: '%s'.", len(history) ,config.model)
+        logger.debug("Sending '%d' messages to the model: '%s'.", len(history) ,config.model)
         response = client.chat(
             model=config.model,
             messages=history
         )
-        logger.info("Ollama response: %d chars.", len(response["message"]['content']))
-        return response["message"]['content']
+        elapsed = time.monotonic() - start
+        reply: str = response["message"]["content"]
+        logger.info("Ollama response in %.2fs, (%d chars).", elapsed, len(reply))
+        return reply
     except ollama.ResponseError as err:
         logger.error("Sorry, Ollama has encountered a problem: %s", err)
         return "Error: Something went wrong with the model."
-    except Exception as e:
-        logger.error("Sorry, an error occurred: %s.", e)
+    except Exception as exc:
+        logger.exception("Sorry, an error occurred: %s.", exc)
         return "Error: Something went wrong. Is Ollama still running?"
 
 def run(config: ChatConfig) -> None:

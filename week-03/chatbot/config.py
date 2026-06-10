@@ -33,3 +33,7 @@ def setup_logging(config: ChatConfig) -> None:
         datefmt=datefmt,
         handlers=handlers,
     )
+
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+    logging.getLogger("ollama").setLevel(logging.WARNING)
