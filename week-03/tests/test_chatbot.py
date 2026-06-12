@@ -1,3 +1,4 @@
+import ollama
 import pytest
 
 from unittest.mock import patch
@@ -43,7 +44,6 @@ def test_add_message_assistant_role(system_message):
     assert system_message[1]["role"] == "assistant"
 
 def test_send_returns_model_reply(chat_config, history, mock_response):
-
     with patch("chatbot.chatbot.ollama.Client") as MockClient:
         instance = MockClient.return_value
         instance.chat.return_value = mock_response
@@ -64,3 +64,21 @@ def test_send_calls_ollama_with_correct_model(MockClient, chat_config, history, 
         model="mistral",
         messages=history
     )
+
+@patch("chatbot.chatbot.ollama.Client")
+def test_send_handles_response_error(MockClient, chat_config, history):
+    instance = MockClient.return_value
+    instance.chat.side_effect = ollama.ResponseError("Model not found.")
+
+    result = send(history, chat_config("llama3"))
+
+    assert result == "Error: Something went wrong with the model."
+
+@patch("chatbot.chatbot.ollama.Client")
+def test_send_handles_unexpected_exception(MockClient, chat_config, history):
+    instance = MockClient.return_value
+    instance.chat.side_effect = RuntimeError("Connection problem occurred.")
+
+    result = send(history, chat_config("llama3"))
+
+    assert result == "Error: Something went wrong. Is Ollama still running?"
