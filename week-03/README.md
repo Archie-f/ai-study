@@ -1,7 +1,7 @@
 # Ollama Chatbot
 
 ![CI](https://github.com/Archie-f/ai-study/actions/workflows/ci.yml/badge.svg?branch=week-03)
-![Python](https://img.shields.io/badge/python-3.14-blue)
+![Python](https://img.shields.io/badge/python-3.12-blue)
 
 A command-line chatbot that talks to a local Ollama model.  
 Built as part of a structured AI Engineer learning path.
