@@ -33,6 +33,7 @@ python week-02/hello_llm.py
 |------|-------|--------|
 | Week 01 | Python for AI, packaging, async CLI | Done   |
 | Week 02 | LLM APIs, Git workflow, CI | Done   |
+| Week 03 | Chatbot refactor, logging, config, pytest | Done |
 
 ## What I Learned
 ### Week 01
@@ -53,3 +54,5 @@ python week-02/hello_llm.py
 - Rebuilt the chatbot from scratch, typed, documented, and with proper error handling
 - Added structured logging with Python's logging module — levels, handlers, latency timing
 - Introduced ChatConfig dataclass — single config object replacing all magic strings
+- Added tests directory, wrote tests mocking the Ollama call with unittest.mock.patch
+- Defined and used pytest fixtures to share setup across tests without breaking test isolation
