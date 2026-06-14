@@ -13,7 +13,7 @@ Built as part of a structured AI Engineer learning path.
 - Automated test suite with `pytest` and `unittest.mock`
 
 ## Requirements
-- Python 3.14+
+- Python 3.12+
 - [Ollama](https://ollama.com) running locally with a model pulled
   (default: `llama3`)
 

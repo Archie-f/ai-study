@@ -1,5 +1,14 @@
 import logging
 from dataclasses import dataclass
+from enum import Enum
+
+
+class Level(Enum):
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
 
 @dataclass
 class ChatConfig:
@@ -13,7 +22,7 @@ class ChatConfig:
     'Be concise. Answer in plain English.'
     )
 
-    log_level: str = "DEBUG"
+    log_level: Level = Level.DEBUG
     log_to_file: bool = False
     log_file: str = "chatbot.log"
 
@@ -35,9 +44,11 @@ def setup_logging(config: ChatConfig) -> None:
             ERROR, CRITICAL).
     """
 
-    level = getattr(logging, config.log_level.upper(), None)
-    if level is None:
-        raise ValueError(f"Invalid log level: {config.log_level}. Must be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL.")
+    root = logging.getLogger()
+    root.handlers.clear()
+    root.setLevel(logging.NOTSET)
+
+    level = getattr(logging, config.log_level.value.upper())
     fmt = '%(asctime)s - %(levelname)-8s - %(name)s - %(message)s'
     datefmt = '%Y-%m-%d %H:%M:%S'
 

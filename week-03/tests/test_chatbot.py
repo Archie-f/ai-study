@@ -1,9 +1,13 @@
+import logging
+
 import ollama
 import pytest
 
 from unittest.mock import patch
-from chatbot.chatbot import add_message, send
-from chatbot.config import ChatConfig
+
+import chatbot.chatbot
+from chatbot.chatbot import add_message, send, run
+from chatbot.config import ChatConfig, setup_logging
 
 @pytest.fixture
 def empty_history() -> list:
@@ -82,3 +86,50 @@ def test_send_handles_unexpected_exception(MockClient, chat_config, history):
     result = send(history, chat_config("llama3"))
 
     assert result == "Error: Something went wrong. Is Ollama still running?"
+
+def test_setup_logging(chat_config):
+    setup_logging(chat_config("llama3"))
+
+    assert logging.getLogger().level == logging.DEBUG
+
+def test_handlers(chat_config, tmp_path):
+    test_log_file = tmp_path / "test_logs.log"
+    config = chat_config("llama3")
+    config.log_to_file = True
+
+    config.log_file = str(test_log_file)
+
+    setup_logging(config)
+    handlers_list = logging.getLogger().handlers
+    assert len(handlers_list) == 2
+    assert any(isinstance(h, logging.FileHandler) for h in handlers_list)
+
+def test_empty_user_message(chat_config):
+    with patch("builtins.input", side_effect=["", "quit"]):
+        with patch("builtins.print") as mock_print:
+                run(chat_config("llama3"))
+                mock_print.assert_any_call(chatbot.chatbot.ENTER_MESSAGE_NOTIFICATION)
+
+@pytest.mark.parametrize("exit_phrase", list(chatbot.chatbot.EXIT_PHRASES))
+def test_exit_phrases(chat_config, exit_phrase):
+    with patch("builtins.input", side_effect=[exit_phrase]):
+        with patch("builtins.print") as mock_print:
+            run(chat_config("llama3"))
+            mock_print.assert_called_once_with(chatbot.chatbot.AI_GOODBYE_MESSAGE)
+
+def test_send_message(chat_config, mock_response):
+    reply = mock_response["message"]["content"]
+    with patch("builtins.input", side_effect=["Hello", "quit"]):
+        with patch("builtins.print") as mock_print:
+            with patch("chatbot.chatbot.send", return_value=reply):
+                run(chat_config("llama3"))
+                mock_print.assert_any_call(f"{chatbot.chatbot.ASSISTANT.capitalize()}: {reply}")
+
+def test_max_turns(chat_config, mock_response):
+    config = chat_config("llama3")
+    config.max_turns = 1
+    with patch("builtins.input", side_effect=["Hello", "Hi"]):
+        with patch("builtins.print") as mock_print:
+            with patch("chatbot.chatbot.send", return_value=mock_response["message"]["content"]):
+                run(config)
+                mock_print.assert_any_call(f"Session reached to limit of {config.max_turns} turns.")
