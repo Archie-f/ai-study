@@ -59,3 +59,7 @@ python week-02/hello_llm.py
 - Wrote a professional, scannable README file with CI and Python version badges
 - Added ChatConfig class docstring, __main__.py module docstring, completed setup_logging Raises section
 - Updated python-version in ci.yml from 3.11 to 3.12 to support the type alias syntax
+- Added run() and setup_logging() tests - Expanded coverage to 93%
+- Used "builtins.input", "builtins.print", and @pytest.mark.parametrize
+- Added "pytest-cov", "mypy", and "ruff" into project.optional-dependencies
+- Learned the pre-merge review workflow — mypy, pytest, ruff, README, and CI must all be green before merging to main
