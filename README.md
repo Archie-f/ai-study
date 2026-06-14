@@ -13,7 +13,7 @@ learning is visible, accountable, and eventually teachable.
 ## How
 
 **Requirements:** 
-* Python 3.11+, 
+* Python 3.12+, 
 * an Anthropic API key, 
 * a Groq API key, 
 * Ollama (optional)
@@ -29,10 +29,11 @@ python week-02/hello_llm.py
 
 ## Weekly Progress
 
-| Week | Topic | Status |
-|------|-------|--------|
-| Week 01 | Python for AI, packaging, async CLI | Done   |
-| Week 02 | LLM APIs, Git workflow, CI | Done   |
+| Week    | Topic                                      | Status |
+|---------|--------------------------------------------|--------|
+| Week 01 | Python for AI, packaging, async CLI        | Done   |
+| Week 02 | LLM APIs, Git workflow, CI                 | Done   |
+| Week 03 | Chatbot refactor, logging, config, pytest  | Done   |
 
 ## What I Learned
 ### Week 01
@@ -47,5 +48,18 @@ python week-02/hello_llm.py
 - Building a unified ask() function that works across Claude, Groq, and Ollama
 - The messages[] format shared by all modern LLM APIs
 - Git rebase and interactive history cleanup
-- GitHub Actions CI — automated linting (``` ruff ```) and tests (``` pytest ```) on every push
+- GitHub Actions CI — automated linting (`ruff`) and tests (`pytest`) on every push
 
+### Week 03
+- Rebuilt the chatbot from scratch, typed, documented, and with proper error handling
+- Added structured logging with Python's logging module — levels, handlers, latency timing
+- Introduced ChatConfig dataclass — single config object replacing all magic strings
+- Added tests directory, wrote tests mocking the Ollama call with unittest.mock.patch
+- Defined and used pytest fixtures to share setup across tests without breaking test isolation
+- Wrote a professional, scannable README file with CI and Python version badges
+- Added ChatConfig class docstring, __main__.py module docstring, completed setup_logging Raises section
+- Updated python-version in ci.yml from 3.11 to 3.12 to support the type alias syntax
+- Added run() and setup_logging() tests - Expanded coverage to 93%
+- Used "builtins.input", "builtins.print", and @pytest.mark.parametrize
+- Added "pytest-cov", "mypy", and "ruff" into project.optional-dependencies
+- Learned the pre-merge review workflow — mypy, pytest, ruff, README, and CI must all be green before merging to main
