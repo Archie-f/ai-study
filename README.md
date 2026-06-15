@@ -29,11 +29,12 @@ python week-02/hello_llm.py
 
 ## Weekly Progress
 
-| Week    | Topic                                      | Status |
-|---------|--------------------------------------------|--------|
-| Week 01 | Python for AI, packaging, async CLI        | Done   |
-| Week 02 | LLM APIs, Git workflow, CI                 | Done   |
-| Week 03 | Chatbot refactor, logging, config, pytest  | Done   |
+| Week    | Topic                                                                           | Status      |
+|---------|---------------------------------------------------------------------------------|-------------|
+| Week 01 | Python for AI, packaging, async CLI                                             | Done        |
+| Week 02 | LLM APIs, Git workflow, CI                                                      | Done        |
+| Week 03 | Chatbot refactor, logging, config, pytest                                       | Done        |
+| Week 04 | Prompt Engineering Foundations — few-shot, chain-of-thought, evaluation mindset | In Progress |
 
 ## What I Learned
 ### Week 01
@@ -63,3 +64,8 @@ python week-02/hello_llm.py
 - Used "builtins.input", "builtins.print", and @pytest.mark.parametrize
 - Added "pytest-cov", "mypy", and "ruff" into project.optional-dependencies
 - Learned the pre-merge review workflow — mypy, pytest, ruff, README, and CI must all be green before merging to main
+
+### Week 04
+- Learned systematic prompting, few-shot prompting and chain-of-thought (CoT)
+- Built an evaluation mindset: "Every prompt is a hypothesis. An eval is the experiment that tests it."
+- Used Python concepts: zip(), @dataclass, textwrap.dedent(), generator expressions with sum()
