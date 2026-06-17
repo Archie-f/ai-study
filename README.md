@@ -69,3 +69,9 @@ python week-02/hello_llm.py
 - Learned systematic prompting, few-shot prompting and chain-of-thought (CoT)
 - Built an evaluation mindset: "Every prompt is a hypothesis. An eval is the experiment that tests it."
 - Used Python concepts: zip(), @dataclass, textwrap.dedent(), generator expressions with sum()
+- Added prompt_runner with variant experiment harness
+- Structured JSON output from LLM API using prompt-based JSON mode
+- Pydantic BaseModel for parsing and validating LLM responses
+- Batch evaluation loop with pass rate scoring
+- Failure categorisation (format failure vs content failure vs label disagreement)
+- Prompt tuning loop: one change at a time, re-run batch, measure improvement
