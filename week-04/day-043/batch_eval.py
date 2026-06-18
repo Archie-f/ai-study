@@ -17,6 +17,14 @@ class EvalResult:
     failure_reason: str | None
 
 def run_batch_eval(test_cases: list[TestData]) -> list[EvalResult]:
+    """Evaluate a batch of test cases.
+
+        Args:
+            test_cases (list[TestData]): A list of test cases.
+
+        Returns:
+            list[EvalResult]: A list of EvalResult.
+    """
     eval_results: list[EvalResult] = []
     for test_case in test_cases:
         result = analyse_sentiment(test_case.input_text)
@@ -35,6 +43,10 @@ def run_batch_eval(test_cases: list[TestData]) -> list[EvalResult]:
     return eval_results
 
 def print_summary(results: list[EvalResult]) -> None:
+    """Print the summary of a batch of test results.
+        Args:
+            results (list[EvalResult]): A list of EvalResult.
+    """
     headers: list[str] = ["LABEL", "EXPECTED", "ACTUAL", "PASS/FAIL"]
     space: int = 13
 
@@ -47,6 +59,10 @@ def print_summary(results: list[EvalResult]) -> None:
     print(f"""Total Pass Rate: {total_pass_rate} %""")
 
 def categorize_failures(results: list[EvalResult]) -> None:
+    """Categorize a batch of test results.
+        Args:
+            results (list[EvalResult]): A list of EvalResult.
+    """
     failures: list[EvalResult] = [res for res in results if not res.passed]
     headers: list[str] = ["LABEL", "FAILURE_REASON"]
 
