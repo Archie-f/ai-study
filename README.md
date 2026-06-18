@@ -75,3 +75,9 @@ python week-02/hello_llm.py
 - Batch evaluation loop with pass rate scoring
 - Failure categorisation (format failure vs content failure vs label disagreement)
 - Prompt tuning loop: one change at a time, re-run batch, measure improvement
+- System prompts: role framing, constraints, and format directives as engineering tools
+- The Anthropic API separates system= from messages[] — other providers (OpenAI, Ollama, Gemini) handle this differently
+- LLMs are stateless — conversation memory is your responsibility; you resend the full history on every call
+- Built ConversationManager: stateful class managing message history with role validation (Literal type), get_history(), clear(), and send()
+- Context window management with a sliding window: trim oldest user+assistant pairs to stay under token budget
+- client.messages.count_tokens() counts tokens without generating output — cheap pre-call budget check
