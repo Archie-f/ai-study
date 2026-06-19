@@ -10,14 +10,24 @@ test_cases_list: list[tuple[str, str]] = [
 
 @dataclass
 class Mistake:
+    """Expected and actual data for an input."""
     input: str
     expected: str
     got: str
 
     def to_dict(self):
+        """Return a dict representing the Mistake"""
         return {"input": self.input, "expected": self.expected, "got": self.got}
 
 def evaluate_prompt(test_cases: list[tuple[str, str]], predictions: list[str]) -> dict:
+    """Counts the number of correct responses and calculates the accuracy.
+        Args:
+            test_cases (list[tuple[str, str]]): Test cases list
+            predictions (list[str]): Predictions list
+
+        Returns:
+            Returns the evaluation of the results as a dict of result
+    """
     mistakes: list[Mistake] = []
     correct: int = 0
     for (inp, expected), actual in zip(test_cases, predictions):

@@ -3,12 +3,13 @@ import os
 from typing import Literal
 
 import anthropic
-from anthropic.types import MessageParam
+from anthropic.types import MessageParam, TextBlock
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
 
 
 class SentimentAnalysis(BaseModel):
+    """Sentiment analysis data for response"""
     sentiment: Literal["positive", "negative", "neutral"]
     confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str = Field(min_length=10)
@@ -85,6 +86,7 @@ def analyse_sentiment(text: str) -> tuple[SentimentAnalysis | None, str | None]:
         messages=message
     )
 
+    assert isinstance(response.content[0], TextBlock)
     response_text: str = response.content[0].text
     cleared_text: str = response_text.strip()
     if cleared_text.startswith("```"):

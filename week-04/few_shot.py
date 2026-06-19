@@ -12,6 +12,14 @@ example_list: list[tuple[str, str]] = [
 ]
 
 def build_few_shot_prompt(examples: list[tuple[str, str]], new_input: str) -> str:
+    """Build few shot prompt text
+        Args:
+            examples (list[tuple[str, str]]): examples list
+            new_input (str): new input text
+
+        Returns:
+            str: few shot prompt text
+    """
     examples_str = "\n".join(f'{ticket} "{inp}" -> {label}' for inp, label in examples)
     return textwrap.dedent(f"""
 {context}

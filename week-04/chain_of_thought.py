@@ -10,6 +10,11 @@ Think step by step:
 
 
 def build_cot_prompt(policy: str, request: str) -> str:
+    """Build a cot prompt.
+        Args:
+            policy (str): Policy text
+            request (str): Request text
+    """
     return textwrap.dedent(f"""
 Policy: {policy}
     

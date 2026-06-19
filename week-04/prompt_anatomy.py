@@ -1,6 +1,15 @@
 import textwrap
 
 def build_prompt(task: str, context: str, output_format: str) -> str:
+    """Build prompt text with the given parameters.
+        Args:
+            task (str): Task
+            context (str): Context
+            output_format (str): Output format
+
+        Returns:
+            str: Prompt text
+    """
     return textwrap.dedent(f"""
     Context: {context}
 

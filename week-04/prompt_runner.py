@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 import anthropic
-from anthropic.types import MessageParam
+from anthropic.types import MessageParam, TextBlock
 from dotenv import load_dotenv
 
 EXAMPLES: list[tuple[str, str]] = [
@@ -157,6 +157,8 @@ def run_variants(
             messages=prompt,
         )
         elapsed_time: float = (time.perf_counter() - start_time) * 1000
+
+        assert isinstance(response.content[0], TextBlock)
         results.append(PromptResult(
             variant_name=name,
             prompt_used=message,

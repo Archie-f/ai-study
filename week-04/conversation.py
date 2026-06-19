@@ -52,7 +52,7 @@ class ConversationManager:
     def clear(self) -> None:
         """Reset history to empty. System prompt is preserved."""
 
-        self._history: list[MessageParam] = []
+        self._history = []
 
     def count_tokens(self, client) -> int:
         """

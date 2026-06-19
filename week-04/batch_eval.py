@@ -3,12 +3,14 @@ from structured_outputs import analyse_sentiment
 
 @dataclass
 class TestData:
+    """A single input/expected-output pair for batch evaluation."""
     label: str
     input_text: str
     expected_sentiment: str
 
 @dataclass
 class EvalResult:
+    """Data for a test result evaluation."""
     label: str
     input_text: str
     expected_sentiment: str
@@ -91,4 +93,3 @@ if __name__ == "__main__":
     results_list: list[EvalResult] = run_batch_eval(test_case_list)
     print_summary(results_list)
     categorize_failures(results_list)
-
