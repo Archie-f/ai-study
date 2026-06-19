@@ -29,11 +29,12 @@ python week-02/hello_llm.py
 
 ## Weekly Progress
 
-| Week    | Topic                                      | Status |
-|---------|--------------------------------------------|--------|
-| Week 01 | Python for AI, packaging, async CLI        | Done   |
-| Week 02 | LLM APIs, Git workflow, CI                 | Done   |
-| Week 03 | Chatbot refactor, logging, config, pytest  | Done   |
+| Week    | Topic                                                                           | Status      |
+|---------|---------------------------------------------------------------------------------|-------------|
+| Week 01 | Python for AI, packaging, async CLI                                             | Done        |
+| Week 02 | LLM APIs, Git workflow, CI                                                      | Done        |
+| Week 03 | Chatbot refactor, logging, config, pytest                                       | Done        |
+| Week 04 | Prompt Engineering Foundations — few-shot, chain-of-thought, evaluation mindset | In Progress |
 
 ## What I Learned
 ### Week 01
@@ -63,3 +64,20 @@ python week-02/hello_llm.py
 - Used "builtins.input", "builtins.print", and @pytest.mark.parametrize
 - Added "pytest-cov", "mypy", and "ruff" into project.optional-dependencies
 - Learned the pre-merge review workflow — mypy, pytest, ruff, README, and CI must all be green before merging to main
+
+### Week 04
+- Learned systematic prompting, few-shot prompting and chain-of-thought (CoT)
+- Built an evaluation mindset: "Every prompt is a hypothesis. An eval is the experiment that tests it."
+- Used Python concepts: zip(), @dataclass, textwrap.dedent(), generator expressions with sum()
+- Added prompt_runner with variant experiment harness
+- Structured JSON output from LLM API using prompt-based JSON mode
+- Pydantic BaseModel for parsing and validating LLM responses
+- Batch evaluation loop with pass rate scoring
+- Failure categorisation (format failure vs content failure vs label disagreement)
+- Prompt tuning loop: one change at a time, re-run batch, measure improvement
+- System prompts: role framing, constraints, and format directives as engineering tools
+- The Anthropic API separates system= from messages[] — other providers (OpenAI, Ollama, Gemini) handle this differently
+- LLMs are stateless — conversation memory is your responsibility; you resend the full history on every call
+- Built ConversationManager: stateful class managing message history with role validation (Literal type), get_history(), clear(), and send()
+- Context window management with a sliding window: trim oldest user+assistant pairs to stay under token budget
+- client.messages.count_tokens() counts tokens without generating output — cheap pre-call budget check
