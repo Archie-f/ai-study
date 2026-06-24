@@ -36,7 +36,7 @@ def ask(content: str, provider: str = "claude") -> str:
     try:
         if provider.lower() == "ollama":
             client = OpenAI(
-                base_url=os.getenv("OLLAMA_BASE_URL"),
+                base_url=f"{os.getenv("OLLAMA_BASE_URL")}/v1/",
                 api_key=os.getenv("OLLAMA_API_KEY"),
             )
             response = client.chat.completions.create(

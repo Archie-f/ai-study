@@ -6,7 +6,7 @@ from openai import OpenAI
 load_dotenv()
 
 client = OpenAI(
-    base_url=os.getenv("OLLAMA_BASE_URL"),
+    base_url=f"{os.getenv("OLLAMA_BASE_URL")}/v1/",
     api_key=os.getenv("OLLAMA_API_KEY"),
 )
 

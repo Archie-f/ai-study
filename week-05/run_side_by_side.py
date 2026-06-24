@@ -9,7 +9,6 @@ def run_side_by_side(prompt: str) -> None:
     for provider in providers:
         result = provider.ask(prompt)
 
-        print(f"======= {result.provider} =======")
         print(f"Provider: {result.provider}")
         print(f"Model: {result.model}")
         print(f"Text: {result.text[:80]}...")
@@ -18,5 +17,8 @@ def run_side_by_side(prompt: str) -> None:
         print()
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+
+    load_dotenv()
     user_input: str = "Explain what an API is in one sentence."
     run_side_by_side(user_input)
