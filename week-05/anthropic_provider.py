@@ -39,5 +39,5 @@ class AnthropicProvider(LLMProvider):
             text=response.content[0].text,
             tokens_in=response.usage.input_tokens,
             tokens_out=response.usage.output_tokens,
-            latency_ms=round(elapsed_time, 1),
+            latency_ms=round(elapsed_time),
         )

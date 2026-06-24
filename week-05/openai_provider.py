@@ -48,5 +48,5 @@ class OpenAIProvider(LLMProvider):
             text=response.choices[0].message.content,
             tokens_in=response.usage.prompt_tokens,
             tokens_out=response.usage.completion_tokens,
-            latency_ms=round(elapsed_time, 1),
+            latency_ms=round(elapsed_time),
         )
