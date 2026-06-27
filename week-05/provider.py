@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -11,6 +11,10 @@ class LLMResult:
     tokens_in: int  # input / prompt tokens
     tokens_out: int  # output / completion tokens
     latency_ms: float  # wall-clock time in milliseconds
+    cost: float = field(default=0.0) # cost in usd
+
+    def __post_init__(self):
+        self.cost = self.cost_usd()
 
     def cost_usd(self) -> float:
         """Calculate cost in USD based on provider pricing.

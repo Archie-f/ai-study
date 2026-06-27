@@ -1,8 +1,13 @@
+import dataclasses
+import json
 from datetime import datetime
 from dataclasses import dataclass, field
+from pathlib import Path
+
 from provider import LLMProvider, LLMResult
 
 TRUNCATE_AT: int = 60
+RESULTS_DIR: Path = Path('results')
 
 @dataclass
 class ComparisonResult:
@@ -13,6 +18,8 @@ class ComparisonResult:
 
     def best_cost(self) -> LLMResult:
         """Get the result that costs least."""
+        if not self.results:
+            raise ValueError("No results to compare.")
         return min(self.results, key=lambda x: x.cost_usd())
 
     def fastest(self) -> LLMResult:
@@ -66,6 +73,34 @@ def print_table(comparison: ComparisonResult) -> None:
     print(f"WINNER: {winner.provider} with Latency of {winner.latency_ms} ms and Cost of ${winner.cost_usd():.6f}")
     print(divider)
 
+def save_to_json(comparison: ComparisonResult) -> Path:
+    """Save a ComparisonResult to a timestamped JSON file.
+
+        Args:
+            comparison (ComparisonResult): a ComparisonResult to be saved as a JSON file.
+
+        Returns: Path of the saved file
+    """
+    RESULTS_DIR.mkdir(exist_ok=True, parents=True)
+
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    filename = RESULTS_DIR / f"{timestamp}.json"
+    data = dataclasses.asdict(comparison)
+
+    filename.write_text(json.dumps(data, indent=2))
+    return filename
+
+def load_from_json(path: Path) -> ComparisonResult:
+    """Load a ComparisonResult from a timestamped JSON file.
+        Args:
+            path (Path): Path to the JSON file.
+
+        Returns: a ComparisonResult object
+    """
+    data = json.loads(path.read_text())
+    data['results'] = [LLMResult(**res) for res in data['results']]
+    return ComparisonResult(**data)
+
 if __name__ == '__main__':
     from dotenv import load_dotenv
 
@@ -85,3 +120,8 @@ if __name__ == '__main__':
 
     results: ComparisonResult = run_comparison(inp, providers_list, system_message)
     print_table(results)
+    print()
+
+    path_to_json_file = save_to_json(results)
+    comparison_result: ComparisonResult = load_from_json(path_to_json_file)
+    print(comparison_result)

@@ -10,3 +10,4 @@ CLAUDE.md
 *.env
 .coverage
 .pytest_cache/
+results/
