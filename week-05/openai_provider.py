@@ -1,5 +1,6 @@
 import time
 
+import openai
 from openai import OpenAI
 from openai.types.chat import (
     ChatCompletionMessageParam,
@@ -36,17 +37,36 @@ class OpenAIProvider(LLMProvider):
         }
         prompt: list[ChatCompletionMessageParam] = [system_turn, user_turn]
         start_time: float = time.perf_counter()
-        response = self.client.chat.completions.create(
-            model=self.model,
-            max_tokens=256,
-            messages=prompt,
-        )
-        elapsed_time: float = (time.perf_counter() - start_time) * 1000
-        return LLMResult(
-            provider='open_ai',
-            model=self.model,
-            text=response.choices[0].message.content,
-            tokens_in=response.usage.prompt_tokens,
-            tokens_out=response.usage.completion_tokens,
-            latency_ms=round(elapsed_time),
-        )
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                max_tokens=256,
+                messages=prompt,
+            )
+            elapsed_time: float = (time.perf_counter() - start_time) * 1000
+            return LLMResult(
+                provider='open_ai',
+                model=self.model,
+                text=response.choices[0].message.content,
+                tokens_in=response.usage.prompt_tokens,
+                tokens_out=response.usage.completion_tokens,
+                latency_ms=round(elapsed_time),
+            )
+        except openai.RateLimitError as e:
+            raise ProviderError(
+                provider_name="openai",
+                original_error=e,
+                retryable=True
+            ) from e
+        except openai.APITimeoutError as e:
+            raise ProviderError(
+                provider_name="openai",
+                original_error=e,
+                retryable=True
+            ) from e
+        except (KeyError, AttributeError) as e:
+            raise ProviderError(
+                provider_name="openai",
+                original_error=e,
+                retryable=False
+            ) from e

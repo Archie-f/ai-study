@@ -34,3 +34,17 @@ class LLMProvider(ABC):
     @abstractmethod
     def ask(self, user_input: str, system_prompt: str = '') -> LLMResult:
         """Send prompt to the LLM and return a unified LLMResult."""
+
+class ProviderError(Exception):
+    def __init__(
+        self,
+        provider_name: str,
+        original_error: Exception,
+        retryable: bool = False,
+    ) -> None:
+        self.provider_name = provider_name
+        self.original_error = original_error
+        self.retryable = retryable
+        super().__init__(
+            f"[{provider_name}] {type(original_error).__name__}: {original_error}"
+        )
