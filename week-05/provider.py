@@ -23,7 +23,8 @@ class LLMResult:
         cost_rates = {
             "claude": (1.00, 5.00),
             "open_ai": (0.15, 0.60),
-            "ollama": (0.00, 0.00)
+            "ollama": (0.00, 0.00),
+            "groq": (0.00, 0.00)
         }
         in_rate, out_rate = cost_rates.get(self.provider, (0, 0))
         return (self.tokens_in * in_rate + self.tokens_out * out_rate) / 1_000_000

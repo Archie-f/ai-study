@@ -109,12 +109,14 @@ if __name__ == '__main__':
     from anthropic_provider import AnthropicProvider
     from openai_provider import OpenAIProvider
     from ollama_provider import OllamaProvider
+    from groq_provider import GroqProvider
 
     inp: str = "Explain what an API is in one sentence."
     system_message: str = 'You are a helpful assistant.'
     providers_list: list[LLMProvider] = [
         AnthropicProvider(),
         OpenAIProvider(),
+        GroqProvider(),
         OllamaProvider()
     ]
 

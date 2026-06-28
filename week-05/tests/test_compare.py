@@ -7,11 +7,12 @@ from compare import run_comparison, ComparisonResult, save_to_json, load_from_js
 
 
 def generate_test_providers_list() -> list[LLMProvider]:
-    providers = [MagicMock(spec=LLMProvider) for _ in range(3)]
+    providers: list[LLMProvider] = [MagicMock(spec=LLMProvider) for _ in range(3)]
     tokens: list[int] = [10, 20, 30]
     latencies: list[float] = [500.0, 200.0, 800.0]
     for count, (p, t, l) in enumerate(zip(providers, tokens, latencies), start=1):
-        p.ask.return_value = LLMResult(
+        mock = MagicMock(spec=LLMProvider)
+        mock.ask.return_value = LLMResult(
             provider=f"test_provider-{count}",
             model=f"test_model-{count}",
             text=f"test_text-{count}",
@@ -19,21 +20,22 @@ def generate_test_providers_list() -> list[LLMProvider]:
             tokens_out=t,
             latency_ms=l,
         )
+        providers[count - 1] = mock
     return providers
 
-def test_run_comparison_collects_all_results():
+def test_run_comparison_collects_all_results() -> None:
     """Tests run_comparison_collects_all_results() using 3 fake providers."""
     providers = generate_test_providers_list()
     comparison_results = run_comparison(prompt='test_prompt', providers=providers)
     assert len(comparison_results.results) == 3
 
-def test_best_cost_returns_cheapest():
+def test_best_cost_returns_cheapest() -> None:
     """Tests best_cost() returns the provider with the lowest cost_usd()."""
     providers = generate_test_providers_list()
     comparison_results = run_comparison(prompt='test_prompt', providers=providers)
     assert comparison_results.best_cost().provider == 'test_provider-1'
 
-def test_save_to_json_creates_file():
+def test_save_to_json_creates_file() -> None:
     """Tests save_to_json_creates_file() using 3 fake providers."""
     providers: list[LLMProvider] = generate_test_providers_list()
     comparison_results: ComparisonResult = run_comparison(prompt='test_prompt', providers=providers)
@@ -45,13 +47,13 @@ def test_save_to_json_creates_file():
     assert c_results.results == comparison_results.results
     assert c_results.time_stamp == comparison_results.time_stamp
 
-def test_fastest_returns_lowest_latency():
+def test_fastest_returns_lowest_latency() -> None:
     """Tests fastest_returns_lowest_latency()."""
     providers = generate_test_providers_list()
     comparison_results = run_comparison(prompt='test_prompt', providers=providers)
     assert comparison_results.fastest().latency_ms == 200.0
 
-def test_best_cost_raises_on_empty():
+def test_best_cost_raises_on_empty() -> None:
     """Tests best_cost() raising value error when results list passed is empty."""
     comparison_results = ComparisonResult(prompt='test_prompt', results=[])
     with pytest.raises(ValueError):

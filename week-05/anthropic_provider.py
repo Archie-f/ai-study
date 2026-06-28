@@ -1,7 +1,7 @@
 import time
 
 import anthropic
-from anthropic.types import MessageParam
+from anthropic.types import MessageParam, TextBlock
 
 from provider import *
 
@@ -21,7 +21,7 @@ class AnthropicProvider(LLMProvider):
 
         Returns:
             A structured LLMResult object containing unified metrics.
-"""
+        """
         prompt: list[MessageParam] = [
             {"role": "user", "content": user_input}
         ]
@@ -34,10 +34,11 @@ class AnthropicProvider(LLMProvider):
                 messages=prompt,
             )
             elapsed_time = (time.perf_counter() - start_time) * 1000
+            text_block = next(b for b in response.content if isinstance(b, TextBlock))
             return LLMResult(
                 provider='claude',
                 model=self.model,
-                text=response.content[0].text,
+                text=text_block.text,
                 tokens_in=response.usage.input_tokens,
                 tokens_out=response.usage.output_tokens,
                 latency_ms=round(elapsed_time),
@@ -54,7 +55,7 @@ class AnthropicProvider(LLMProvider):
                 original_error=e,
                 retryable=True,
             ) from e
-        except (KeyError, AttributeError) as e:
+        except (KeyError, AttributeError, StopIteration) as e:
             raise ProviderError(
                 provider_name="anthropic",
                 original_error=e,

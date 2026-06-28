@@ -5,11 +5,13 @@ from provider import LLMProvider, LLMResult
 from anthropic_provider import AnthropicProvider
 from openai_provider import OpenAIProvider
 from ollama_provider import OllamaProvider
+from groq_provider import GroqProvider
 
 
 PROVIDERS: dict[str, LLMProvider] = {
     "claude": AnthropicProvider(),
     "gpt": OpenAIProvider(),
+    "groq": GroqProvider(),
     "ollama": OllamaProvider(),
 }
 

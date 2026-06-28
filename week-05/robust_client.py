@@ -25,6 +25,7 @@ def with_retry(max_attempts: int = 3, base_delay: float = 1.0) -> Callable:
                         print(f"  Retry {attempt + 1}/{max_attempts - 1} "
                               f"after {delay:.1f}s — {e}")
                         time.sleep(delay)
+            assert last_error is not None  # loop always runs at least once
             raise last_error  # all attempts exhausted
         return wrapper
     return decorator
@@ -53,6 +54,7 @@ class ProviderChain:
                     type(e.original_error).__name__,
                 )
                 last_error = e
+        assert last_error is not None
         raise ProviderError(
             provider_name="ProviderChain",
             original_error=RuntimeError("All providers failed"),

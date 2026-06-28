@@ -1,11 +1,12 @@
 from provider import LLMProvider
 from anthropic_provider import AnthropicProvider
 from openai_provider import OpenAIProvider
+from groq_provider import GroqProvider
 
 
 def run_side_by_side(prompt: str) -> None:
     """Run the same prompt across all available providers and print results."""
-    providers: list[LLMProvider] = [AnthropicProvider(), OpenAIProvider()]
+    providers: list[LLMProvider] = [AnthropicProvider(), OpenAIProvider(), GroqProvider()]
     for provider in providers:
         result = provider.ask(prompt)
 
