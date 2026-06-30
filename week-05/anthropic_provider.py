@@ -12,12 +12,13 @@ class AnthropicProvider(LLMProvider):
         self.client = anthropic.Anthropic()
         self.model = model
 
-    def ask(self, user_input: str, system_prompt: str = '') -> LLMResult:
+    def ask(self, user_input: str, system_prompt: str = '', temperature: float = 0.7) -> LLMResult:
         """Call Anthropic messages create and return unified LLMResult.
 
         Args:
             user_input: The text prompt provided by the user.
             system_prompt: Optional background instructions for the model.
+            temperature: Optional background instructions for the temperature.
 
         Returns:
             A structured LLMResult object containing unified metrics.
@@ -32,6 +33,7 @@ class AnthropicProvider(LLMProvider):
                 max_tokens=256,
                 system=system_prompt,
                 messages=prompt,
+                temperature=temperature,
             )
             elapsed_time = (time.perf_counter() - start_time) * 1000
             text_block = next(b for b in response.content if isinstance(b, TextBlock))
