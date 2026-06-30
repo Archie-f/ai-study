@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 @dataclass
 class EvalCase:
-    """One row in your eval dataset."""
+    """One row in the eval dataset."""
     prompt: str
     expected: str
     category: str = ''
