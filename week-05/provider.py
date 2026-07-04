@@ -12,6 +12,8 @@ class LLMResult:
     tokens_out: int  # output / completion tokens
     latency_ms: float  # wall-clock time in milliseconds
     cost: float = field(default=0.0) # cost in usd
+    judge_score: float | None = None
+    judge_reason: str = ""
 
     def __post_init__(self):
         self.cost = self.cost_usd()

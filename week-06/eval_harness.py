@@ -41,8 +41,6 @@ def run_eval(
         output = provider.ask(user_input=case.prompt, system_prompt=system_prompt).text
         scorer = get_scorer(case.category)
 
-        scorer = get_scorer(case.category)
-
         if scorer is score_with_llm and judge:
             results.append(scorer(case, output, judge))
         elif scorer is score_with_llm and not judge:

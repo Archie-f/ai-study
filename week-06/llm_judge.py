@@ -6,6 +6,7 @@ from eval_types import EvalCase, EvalResult
 
 sys.path.append(str(Path(__file__).parent.parent / "week-05"))
 from provider import LLMProvider, LLMResult
+from anthropic_provider import AnthropicProvider
 
 JUDGE_SYSTEM_PROMPT = '''
 You are an impartial evaluator. You will be given:
@@ -17,9 +18,10 @@ Score the output on a scale of 0 to 3:
   1 = Partially correct but missing key information
   2 = Correct but could be clearer or more complete
   3 = Excellent: accurate, clear, and appropriately concise
+If the respond includes any Error, return the score value as None.
 
 Respond with ONLY a JSON object in this exact format:
-  {"score": <0-3>, "reason": "<one sentence>"}
+  {"score": <0-3> or <None>, "reason": "<one sentence>"}
 Do not add any other text.
 '''
 
@@ -33,10 +35,13 @@ Output to evaluate:
 
 Score this output."""
 
-def normalize_score(score: float, scale: int) -> float:
+def normalize_score(score: float, scale: int) -> float | None:
     """Normalize given score from a given scale to the 0.0–1.0 range."""
     if scale == 0:
         raise ValueError('Scale cannot be zero')
+
+    if score is None:
+        return None
 
     return score / scale
 
@@ -55,7 +60,8 @@ def score_with_llm(
 ) -> EvalResult:
     """Score an output using a second LLM as judge."""
     judge_prompt = build_judge_prompt(case.prompt, actual, case.task_description)
-    raw_result = judge.ask(judge_prompt, JUDGE_SYSTEM_PROMPT, temperature=0.0)
+    raw_result = judge.ask(judge_prompt, JUDGE_SYSTEM_PROMPT, temperature=0.0) if isinstance(judge, AnthropicProvider) \
+        else judge.ask(judge_prompt, JUDGE_SYSTEM_PROMPT)
     judge_result = clean_result(raw_result)
 
     try:
@@ -63,13 +69,13 @@ def score_with_llm(
         score = judge_response["score"]
         reason = judge_response["reason"]
     except (json.JSONDecodeError, KeyError, ValueError):
-        score, reason = 0, f'Judge returned invalid JSON: {judge_result!r}'
+        score, reason = None, f'Judge returned invalid JSON: {judge_result!r}'
 
     score_normalized = normalize_score(score, scale=3)
     return EvalResult(
         case=case,
         actual_output=actual,
         score=score_normalized,
-        passed=score >= 2,
+        passed=score >= 2 if score is not None else False,
         reason=reason,
     )
