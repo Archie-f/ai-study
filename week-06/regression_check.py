@@ -1,13 +1,35 @@
-from eval_types import EvalResult
+import json
 
-BASELINE_PASS_RATE = 0.85
 
-def check_regression(results: list[EvalResult]) -> None:
-    """Check if a regression exists in the pass rate."""
-    pass_rate: float = sum(1 for r in results if r.passed) / len(results)
-    diff: float = pass_rate - BASELINE_PASS_RATE
+def load_baseline(path: str) -> dict[str, float]:
+    """Load a baseline dict[str, float] of previously recorded pass rates."""
+    with open(path) as f:
+        return json.load(f)
 
-    if diff < -0.05:
-        print(f"!!! REGRESSION: {diff:.0%} (delta: {diff:+.0%}), BASELINE: {BASELINE_PASS_RATE:.0%}")
-    else:
-        print(f"√ No Regression. Pass rate: {pass_rate:.0%} (delta: {diff:+.0%}), BASELINE: {BASELINE_PASS_RATE:.0%}")
+def check_regression(
+    baseline: dict[str, float],
+    current: dict[str, float],
+    tolerance: float = 0.05,
+) -> list[str]:
+    """Compare current pass rates against a baseline and flag regressions.
+
+    Args:
+        baseline: Mapping of key -> previously recorded pass rate (0.0-1.0).
+        current: Mapping of key -> pass rate (0.0-1.0) from the batch
+            being checked.
+        tolerance: Maximum acceptable drop before a key counts as a
+            regression. Defaults to 0.05.
+
+    Returns:
+        A list of keys whose pass rate dropped by more than `tolerance`
+        relative to baseline. Empty list means no regressions found.
+    """
+    failed: list[str] = []
+    for key in baseline:
+        if key in current:
+            drop = baseline[key] - current[key]
+            if drop > tolerance:
+                failed.append(key)
+    return failed
+
+

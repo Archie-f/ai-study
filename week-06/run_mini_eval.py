@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 from eval_types import EvalCase, EvalResult
 from eval_harness import run_eval, print_report
 from eval_dataset import EVAL_DATASET
-from batch_runner import run_batch, print_batch_summary
+from batch_runner import run_batch
+from eval_report import generate_report
 
 load_dotenv()
 
@@ -65,7 +66,7 @@ def run_batch_runner(cases: list[EvalCase]):
         judge=AnthropicProvider(),
         system_prompt=factual_system_prompt,
     )
-    print_batch_summary(all_results)
+    generate_report(all_results)
 
 if __name__ == "__main__":
     run_batch_runner(EVAL_DATASET)

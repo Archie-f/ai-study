@@ -7,7 +7,6 @@ from typing import Optional
 
 from eval_types import EvalCase, EvalResult
 from eval_harness import run_eval
-from eval_dataset import Category
 
 sys.path.append(str(Path(__file__).parent.parent / 'week-05'))
 from provider import LLMProvider
@@ -19,7 +18,7 @@ PRICING = {
 }
 
 AVG_OUTPUT_TOKENS = 200
-RESULTS_DIR = Path("results")
+RESULTS_DIR = Path(__file__).parent / "results"
 
 def estimate_cost(dataset: list[EvalCase], providers: list[str]) -> float:
     """Rough cost estimate in USD before running the batch.
@@ -74,7 +73,7 @@ def run_batch(
 
 
 def _persist(all_results: dict[str, list[EvalResult]]) -> None:
-    """Persist batch results to a timestamped JSON file in the results directory.
+    """Persist batch results to a timestamped JSON file in the results/ directory.
 
         Creates the results/ directory if it does not exist. Each call writes a new
         file named batch_YYYY-MM-DD_HH-MM.json containing all provider results as
@@ -94,40 +93,3 @@ def _persist(all_results: dict[str, list[EvalResult]]) -> None:
     }
     path.write_text(json.dumps(serializable, indent=2))
     print(f"Results saved to {path}")
-
-def get_categorized_result_numbers(all_results: dict[str, list[EvalResult]]) -> dict[str, dict[str, int]]:
-    """Categorize passed results by category."""
-    category_classified: dict[str, dict[str, int]] = {
-        Category.factual:       {"passed": 0, "total": 0},
-        Category.summarization: {"passed": 0, "total": 0},
-        Category.sentiment:     {"passed": 0, "total": 0},
-    }
-
-    for results in all_results.values():
-        for eval_result in results:
-            cat = eval_result.case.category
-            category_classified[cat]["total"] += 1
-            if eval_result.passed:
-                category_classified[cat]["passed"] += 1
-
-    return category_classified
-
-def print_batch_summary(all_results: dict[str, list[EvalResult]]) -> None:
-    """Print per-provider pass rates after a batch run."""
-    print("\n-- Batch Summary ----------------------------")
-    for provider_name, results in all_results.items():
-        total  = len(results)
-        passed = sum(1 for r in results if r.passed)
-        rate   = passed / total if total > 0 else 0.0
-        print(f"  {provider_name:<10}  {passed}/{total}  ({rate:.0%})")
-
-    print("\n-- Categorized Results ----------------------")
-    categorized_results = get_categorized_result_numbers(all_results)
-    for cat in categorized_results.keys():
-        passed = categorized_results[cat]["passed"]
-        total = categorized_results[cat]["total"]
-        rate = passed / total if total > 0 else 0.0
-        print(f"  {cat:<15}  {passed}/{total:<5}  ({rate:.0%})")
-
-    print("-" * 45 + "\n")
-
