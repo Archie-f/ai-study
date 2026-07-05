@@ -13,6 +13,6 @@ class EvalResult:
     """The outcome of scoring one case."""
     case: EvalCase
     actual_output: str
-    score: float
+    score: float | None
     passed: bool
     reason: str = ''

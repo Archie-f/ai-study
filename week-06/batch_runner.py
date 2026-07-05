@@ -45,7 +45,7 @@ def run_batch(
     providers: dict[str, LLMProvider],
     judge: Optional[LLMProvider] = None,
     persist: bool = True,
-    system_prompt: Optional[str] = ""
+    system_prompt: str = ""
 ) -> dict[str, list[EvalResult]]:
     """Run all cases against all providers. Returns results keyed by provider name.
 
@@ -54,7 +54,7 @@ def run_batch(
         providers: Dict mapping provider name → LLMProvider instance.
         judge:     Optional LLMProvider to use for LLM-as-judge scoring.
         persist:   If True, write results to results/batch_YYYY-MM-DD_HH-MM.json.
-        system_prompt: Optional system prompt passed to all providers. If None, providers use their default.
+        system_prompt: System prompt passed to all providers (default: none).
     """
     all_results: dict[str, list[EvalResult]] = {}
     for provider_name, provider in providers.items():

@@ -26,7 +26,7 @@ def run_eval(
     cases: list[EvalCase],
     provider: LLMProvider,
     judge: Union[LLMProvider, None] = None,
-    system_prompt: Union[str, None] = None,
+    system_prompt: str = '',
 ) -> list[EvalResult]:
     """Run all eval cases through a provider and score each result.
 
@@ -34,7 +34,7 @@ def run_eval(
             cases: list of EvalCase objects to evaluate
             provider: LLMProvider used to generate outputs
             judge: optional LLMProvider used by LLM-as-judge scorer
-            system_prompt: optional system prompt passed to the provider
+            system_prompt: system prompt passed to the provider (default: none)
     """
     results = []
     for case in cases:
