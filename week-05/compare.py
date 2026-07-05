@@ -1,10 +1,15 @@
 import dataclasses
 import json
+import sys
 from datetime import datetime
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from provider import LLMProvider, LLMResult
+from provider import LLMProvider, LLMResult, ProviderError
+
+sys.path.append(str(Path(__file__).parent.parent / 'week-06'))
+from llm_judge import score_with_llm
+from eval_types import EvalCase, EvalResult
 
 TRUNCATE_AT: int = 60
 RESULTS_DIR: Path = Path('results')
@@ -37,11 +42,39 @@ def run_comparison(
         prompt: str,
         providers: list[LLMProvider],
         system_prompt: str = '',
+        judge: LLMProvider | None = None,
 ) -> ComparisonResult:
     """Run prompt across all providers and return a ComparisonResult."""
     comparison_results = ComparisonResult(prompt=prompt)
     for provider in providers:
-        result = provider.ask(prompt, system_prompt)
+        try:
+            result = provider.ask(prompt, system_prompt)
+        except ProviderError as e:
+            result = LLMResult(
+                provider=e.provider_name,
+                model='unknown',
+                text='',
+                tokens_in=0,
+                tokens_out=0,
+                latency_ms=0,
+                judge_score=None,
+                judge_reason=f"ERROR: {e}",
+            )
+
+        if judge is not None:
+            task_description: str = "Evaluate the quality of the given response to the given prompt."
+            case = EvalCase(prompt=prompt, expected='', task_description=task_description)
+            try:
+                eval_result = score_with_llm(
+                    case=case,
+                    actual=result.text,
+                    judge=judge,
+                )
+                result.judge_score = eval_result.score
+                result.judge_reason = eval_result.reason
+            except Exception as e:
+                result.judge_score, result.judge_reason = None, f'Error: {e}'
+
         comparison_results.results.append(result)
 
     return comparison_results
@@ -52,7 +85,11 @@ def truncate(text: str, length: int) -> str:
 
 def print_table(comparison: ComparisonResult) -> None:
     """Print a formatted comparison table to stdout."""
-    header: str = f"{'Provider':<20} | {'Response':<65} | {'In':<5} | {'Out':<5} | {'Cost ($)':<10} | {'Latency (ms)':<10}"
+    has_judge_score: bool = any(result.judge_score is not None for result in comparison.results)
+    header: str = f"{'Provider':<20} | {'Response':<65} | {'In':<5} | {'Out':<5} | {'Cost ($)':<10} | {'Latency (ms)':<13}"
+    if has_judge_score:
+        header += f" | {'Judge Score':<13} | {'Judge Reason':<65}"
+    
     divider: str = '-' * len(header)
     winner: LLMResult = comparison.winner()
 
@@ -62,8 +99,12 @@ def print_table(comparison: ComparisonResult) -> None:
     print(divider)
 
     for result in comparison.results:
-        print(f"{result.provider:<20} | {truncate(result.text, TRUNCATE_AT):<65} | {result.tokens_in:<5} | "
-              f"{result.tokens_out:<5} | {result.cost_usd():<10.6f} | {result.latency_ms:<10}")
+        row: str = (f"{result.provider:<20} | {truncate(result.text, TRUNCATE_AT):<65} | {result.tokens_in:<5} | "
+              f"{result.tokens_out:<5} | {result.cost_usd():<10.6f} | {result.latency_ms:<13}")
+        if has_judge_score:
+            row += f" | {'None':<13} | {truncate(result.judge_reason, TRUNCATE_AT):<65}" if result.judge_score is None \
+                else f" | {result.judge_score:<13.2f} | {truncate(result.judge_reason, TRUNCATE_AT):<65}"
+        print(row)
     print(divider)
 
     fastest: LLMResult = comparison.fastest()
@@ -120,7 +161,7 @@ if __name__ == '__main__':
         OllamaProvider()
     ]
 
-    results: ComparisonResult = run_comparison(inp, providers_list, system_message)
+    results: ComparisonResult = run_comparison(inp, providers_list, system_message, GroqProvider())
     print_table(results)
     print()
 
