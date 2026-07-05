@@ -11,3 +11,5 @@ CLAUDE.md
 .coverage
 .pytest_cache/
 results/
+week-06/scratch_responses/
+week-06/scratch_tickets/
