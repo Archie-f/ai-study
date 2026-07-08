@@ -1,14 +1,18 @@
+import os
 import time
 
 import anthropic
 from anthropic.types import MessageParam, TextBlock
+from dotenv import load_dotenv
 
 from provider import *
+
+load_dotenv()
 
 class AnthropicProvider(LLMProvider):
     """Anthropic Claude via the Anthropic SDK."""
 
-    def __init__(self, model: str = 'claude-haiku-4-5') -> None:
+    def __init__(self, model: str = os.getenv("ANTHROPIC_MODEL_NAME")) -> None:
         self.client = anthropic.Anthropic()
         self.model = model
 
@@ -43,6 +47,52 @@ class AnthropicProvider(LLMProvider):
                 text=text_block.text,
                 tokens_in=response.usage.input_tokens,
                 tokens_out=response.usage.output_tokens,
+                latency_ms=round(elapsed_time),
+            )
+        except anthropic.RateLimitError as e:
+            raise ProviderError(
+                provider_name="anthropic",
+                original_error=e,
+                retryable=True,
+            ) from e
+        except anthropic.APITimeoutError as e:
+            raise ProviderError(
+                provider_name="anthropic",
+                original_error=e,
+                retryable=True,
+            ) from e
+        except (KeyError, AttributeError, StopIteration) as e:
+            raise ProviderError(
+                provider_name="anthropic",
+                original_error=e,
+                retryable=False,
+            ) from e
+
+    def ask_stream(self, user_input: str, system_prompt: str = '') -> Generator[str, Any, LLMResult]:
+        """Yield response text chunks as they arrive from the provider."""
+        prompt: list[MessageParam] = [
+            {"role": "user", "content": user_input}
+        ]
+        response: str = ""
+        start_time: float = time.perf_counter()
+        try:
+            with self.client.messages.stream(
+                    model=self.model,
+                    max_tokens=256,
+                    system=system_prompt,
+                    messages=prompt,
+            ) as stream:
+                for text in stream.text_stream:
+                    response += text
+                    yield text
+                final_message = stream.get_final_message()
+            elapsed_time = (time.perf_counter() - start_time) * 1000
+            return LLMResult(
+                provider="claude",
+                model=self.model,
+                text=response,
+                tokens_in=final_message.usage.input_tokens,
+                tokens_out=final_message.usage.output_tokens,
                 latency_ms=round(elapsed_time),
             )
         except anthropic.RateLimitError as e:
