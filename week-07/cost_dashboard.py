@@ -77,3 +77,22 @@ def write_cost_summary_csv(summary: dict[str, dict], out_path: Path) -> None:
         writer = csv.writer(f)
         writer.writerow(headers)
         writer.writerows(rows)
+
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.path.insert(0, '../week-05')
+    from dotenv import load_dotenv
+
+    load_dotenv('../.env')
+
+    from anthropic_provider import AnthropicProvider
+
+
+    provider = AnthropicProvider()
+    result = tracked_call(provider, "Reply with exactly one word: hello")
+    print(result)
+
+    print(summarize(LOG_PATH))
