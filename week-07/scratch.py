@@ -1,6 +1,9 @@
+import json
 import os
 import sys
 import time
+from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 from typing import Generator, Any
 
@@ -82,7 +85,7 @@ load_dotenv()
 sys.path.append(str(Path(__file__).resolve().parent.parent / 'week-05'))
 from provider import LLMResult
 
-# Day 03 - Exercise 3 — Implement ask_stream() for One Provider
+# Day 02 - Exercise 3 — Implement ask_stream() for One Provider
 # Implement the ask_stream() signature above for AnthropicProvider, using either the generator return-value trick
 # from 3.1 or the mutable-object alternative from the tip above — your choice.
 # Expected output format: a script (e.g. streaming_demo.py) that calls ask_stream()
@@ -132,12 +135,129 @@ def print_stream_and_collect_result(generator) -> LLMResult:
         return end.value
 
 
+########################################################################################################################
+
+# Day 03 - Exercise 1 — A Request Log for a Web Server
+# A teammate wants every incoming HTTP request logged as one line, so a log-shipping tool (like Filebeat)
+# can tail the file live and forward new lines as they're written. Each entry needs the
+# request method, path, response status, how long it took, and a timestamp generated inside the function.
+
+def append_json_line(entry: dict, log_path: Path) -> None:
+    """Append one dict as a single JSON line to log_path."""
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open("a") as f:
+        f.write(json.dumps(entry) + "\n")
+
+def append_request_log(
+        method: str, path: str, status: int, duration_ms: float, log_path: Path
+) -> None:
+    """Append one HTTP request event as a single JSON line to log_path.
+
+    Each line must be a complete, independently-parseable JSON object
+    containing method, path, status, duration_ms, and an ISO 8601
+    timestamp generated inside the function.
+    """
+    entry: dict[str, Any] = {
+        "method": method,
+        "path": path,
+        "status": status,
+        "duration_ms": duration_ms,
+        "timestamp": datetime.now().isoformat(),
+    }
+    append_json_line(entry, log_path)
+
+# Day 03 - Exercise 2 — Tracking Slow File Reads
+# A data pipeline reads dozens of files, and you want to know which ones are slow to read —
+# without changing every call site that reads a file.
+# Write a wrapper that reads a file's text, times it, and logs the result,
+# then still returns the text like a normal read would.
+
+def tracked_read(
+        path: Path, log_path: Path = Path("results/read_log.jsonl")
+) -> str:
+    """Read path as text, measure elapsed time with time.perf_counter(),
+    and append one JSON line to log_path containing
+    {'file': str(path), 'chars': <int>, 'elapsed_ms': <float>}.
+
+    Returns the file's text content, unchanged.
+    """
+    start_time = time.perf_counter()
+    text = path.read_text()
+    elapsed_time = (time.perf_counter() - start_time) * 1000
+
+    entry: dict[str, Any] = {
+        "file": str(path),
+        "chars": len(text),
+        "elapsed_ms": elapsed_time,
+    }
+    append_json_line(entry, log_path)
+    return text
+
+# Day 03 - Exercise 3 — Summarizing Page Views by Path
+# An analytics pipeline writes one JSON line per page view: {"path": str, "duration_ms": float}.
+# Write a function that groups these by path and reports how many views each page got and the average time spent.
+
+def summarize_by_path(log_path: Path) -> dict[str, dict]:
+    """Aggregate page view events by path.
+
+    Returns:
+        {path: {"views": int, "avg_duration_ms": float}}
+    """
+    grouped: dict[str, list[dict]] = defaultdict(list)
+
+    with log_path.open() as f:
+        for line in f:
+            entry: dict[str, Any] = json.loads(line)
+            grouped[entry["path"]].append(entry)
+
+    summary: dict[str, dict] = {}
+    for path, entries in grouped.items():
+        views = len(entries)
+        avg_duration_ms = round((sum(entry["duration_ms"] for entry in entries) / views), 1)
+        summary[path] = {
+            "views": views,
+            "avg_duration_ms": avg_duration_ms,
+        }
+
+    return summary
+
+# Day 03 - Exercise 4 — Exporting the Cost Dashboard as CSV
+# summarize()'s dict output is great for code, but a teammate wants to open the numbers in a spreadsheet.
+# Write a function that persists it as a CSV file — a different output format than the Markdown report you just built,
+# but the same “build content, then write once” shape.
+#
+# write_cost_summary_csv() passed review and was promoted into week-07/cost_dashboard.py,
+# right after summarize() — it's a real project feature now (a spreadsheet-friendly view of the cost dashboard),
+# not just exercise practice. Import it from there if needed.
+
+
+
 if __name__ == "__main__":
+    pass
     # print(calculate_estimate_cost(800, 150, 200, "claude-sonnet"))
     #
     # providers_list = ["claude-haiku", "claude-sonnet", "gpt-4o-mini"]
     # print(estimate_regression_budget(500, 300, 120, providers_list, 50))
 
-    input_text = "Write a two-line limerick about deploying code on a Friday."
-    gen = ask_stream(input_text=input_text)
-    print_stream_and_collect_result(gen)
+    # input_text = "Write a two-line limerick about deploying code on a Friday."
+    # gen = ask_stream(input_text=input_text)
+    # print_stream_and_collect_result(gen)
+
+    # path_to_log: Path = Path(__file__).parent / "exercise_data" / "analytics.jsonl"
+    # summarized = summarize_by_path(path_to_log)
+    # for path in summarized.keys():
+    #     print(f"Path: {path}")
+    #     print(f"Views: {summarized[path]['views']}")
+    #     print(f"Average duration: {summarized[path]['avg_duration_ms']}")
+    #     print("-" * 33)
+
+    # write_cost_summary_csv() now lives in cost_dashboard.py — see the demo there.
+    # path_to_cost_log = Path(__file__).parent / "results" / "cost_log.jsonl"
+    # path_for_cost_summary = Path(__file__).parent / "results" / "cost_summary.csv"
+    # write_cost_summary_csv(
+    #     summarize(path_to_cost_log),
+    #     path_for_cost_summary
+    # )
+
+
+
