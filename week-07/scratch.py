@@ -1,11 +1,12 @@
 import json
 import os
+import random
 import sys
 import time
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Generator, Any
+from typing import Generator, Any, Callable
 
 import anthropic
 from anthropic.types import MessageParam
@@ -230,10 +231,102 @@ def summarize_by_path(log_path: Path) -> dict[str, dict]:
 # right after summarize() — it's a real project feature now (a spreadsheet-friendly view of the cost dashboard),
 # not just exercise practice. Import it from there if needed.
 
+########################################################################################################################
 
+# Day 04 - Exercise 1 — Retry Classifier for a File Downloader
+# You're writing a small utility that downloads files over HTTP and needs to decide whether a failed download
+# is worth retrying. It is not the LLM code from this section — it's a plain HTTP status classifier.
+#
+# Write it in scratch.py, then check it against a handful of codes by hand: 429, 500, 503, 400, 404, 401.
+
+def is_retryable(status_code: int) -> bool:
+    """Return True if a failed download at this status code is worth retrying.
+
+    Treat 429 and any 5xx as retryable. Treat anything else
+    (400s other than 429, or an unrecognized code) as not.
+    """
+    return status_code == 429 or 499 < status_code < 600
+
+
+# Day 04 - Exercise 2 — Retry Loop for a Queue Consumer
+# A message-queue consumer polls for the next message and occasionally gets a transient connection error
+# from the queue client. Different domain from the LLM retry, same underlying pattern.
+# Test it with a fake poll_fn that fails twice then succeeds, and one that always fails.
+
+def poll_with_retry(poll_fn, max_retries=3, base_delay=0.5):
+    """Call poll_fn() (which may raise ConnectionError), retrying
+    with exponential backoff. Re-raise after max_retries failures.
+    """
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            return poll_fn()
+        except ConnectionError as e:
+            last_error = e
+            if attempt < max_retries - 1:
+                jitter = random.uniform(0, 0.5)
+                delay = base_delay * (2 ** attempt) + jitter
+                time.sleep(delay)
+
+    assert last_error is not None
+    raise last_error
+
+# Day 04 - Exercise 3 — Two Backoff Policies
+# A print shop's job queue has two failure modes from its printer driver:
+# PrinterBusyError (retry fast, printer frees up quickly) and
+# PrinterOutOfPaperError (retry slow — someone has to physically refill it).
+# The point of this exercise is deciding the branch, not the sleep math you already wrote in Exercise 2.
+
+def retry_print_job(fn, is_out_of_paper: Callable[[Exception], bool]):
+    """Retry fn(). Use a 5s base delay if is_out_of_paper(err) is
+    True, otherwise a 0.5s base delay. Both cases still cap at
+    3 attempts total.
+    """
+    last_error = None
+    max_attempts = 3
+
+    for attempt in range(max_attempts):
+        base_delay = 0.5
+        try:
+            return fn()
+        except Exception as e:
+            last_error = e
+            if is_out_of_paper(e):
+                base_delay = 5
+            if attempt < max_attempts - 1:
+                jitter = random.uniform(0, 0.5)
+                delay = base_delay * (2 ** attempt) + jitter
+                time.sleep(delay)
+    assert last_error is not None
+    raise last_error
+
+# Day 04 - Exercise 4 — Write model_selection_notes.md
+# This code is generated to generate real results for model_selection_notes
+from cost_dashboard import run_comparison_batch
+
+sys.path.append(str(Path(__file__).resolve().parent / 'week-05'))
+from provider import LLMProvider
+from anthropic_provider import AnthropicProvider
+from groq_provider import GroqProvider
+from ollama_provider import OllamaProvider
+from openai_provider import OpenAIProvider
+
+PROMPTS: list[str] = [
+    "What year did the Berlin Wall fall, and who was the German chancellor at the time?",
+    "Summarize this in two sentences: [paste a paragraph from any of your project's docstrings or README]",
+    "Write a Python function that checks if a string is a palindrome, ignoring case and spaces.",
+    "A train leaves at 2pm going 60 mph. Another leaves the same station at 3pm going 90 mph in the same direction. At what time does the second train catch up?",
+    "List exactly 3 pros and 3 cons of using a local LLM instead of a hosted API, as a numbered list, nothing else."
+    ]
+
+providers_list: list[LLMProvider] = [
+    AnthropicProvider(),
+    OpenAIProvider(),
+    GroqProvider(),
+    OllamaProvider(),
+]
 
 if __name__ == "__main__":
-    pass
     # print(calculate_estimate_cost(800, 150, 200, "claude-sonnet"))
     #
     # providers_list = ["claude-haiku", "claude-sonnet", "gpt-4o-mini"]
@@ -258,6 +351,8 @@ if __name__ == "__main__":
     #     summarize(path_to_cost_log),
     #     path_for_cost_summary
     # )
+
+    run_comparison_batch(prompts=PROMPTS, providers=providers_list)
 
 
 
