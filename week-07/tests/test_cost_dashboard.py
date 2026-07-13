@@ -28,7 +28,7 @@ results = [
         LLMResult(provider="ollama", model="llama3", text="Goodbye!", tokens_in=2, tokens_out=2, latency_ms=1126),
     ]
 
-def test_log_run_appends_one_valid_json_line_per_call(tmp_path) -> None:
+def test_log_run_appends_one_valid_json_line_per_call(tmp_path: Path) -> None:
     """log_run() should append one independently-parseable JSON line per call,
     with the LLMResult's fields (provider, tokens_in, tokens_out, cost,
     latency_ms) plus a timestamp — and never overwrite previous lines.
@@ -42,7 +42,7 @@ def test_log_run_appends_one_valid_json_line_per_call(tmp_path) -> None:
 
     assert len(entries) == len(results)
 
-def test_summarize_returns_correct_totals_per_provider(tmp_path) -> None:
+def test_summarize_returns_correct_totals_per_provider(tmp_path: Path) -> None:
     """summarize() should group logged calls by provider and return the
     correct calls / total_cost / avg_latency_ms for each — computed from
     known, hand-calculable LLMResult values, not live API output.

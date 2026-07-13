@@ -1,5 +1,8 @@
 import sys
 from pathlib import Path
+from typing import Any, Generator
+
+import pytest
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent / 'week-05'))
@@ -8,7 +11,7 @@ from streaming_demo import print_stream_and_collect_result
 from provider import LLMResult
 
 
-def fake_stream(chunks: list[str], result: LLMResult):
+def fake_stream(chunks: list[str], result: LLMResult) -> Generator[str, Any, LLMResult]:
     """A fake generator standing in for ask_stream() — yields chunks, then returns result."""
     for chunk in chunks:
         yield chunk
@@ -31,7 +34,7 @@ def test_print_stream_and_collect_result_returns_final_llm_result() -> None:
     assert actual_result == expected_result
 
 
-def test_print_stream_and_collect_result_prints_each_chunk(capsys) -> None:
+def test_print_stream_and_collect_result_prints_each_chunk(capsys: pytest.CaptureFixture[str]) -> None:
     result = LLMResult(
         provider="claude",
         model="claude-haiku-4-5",

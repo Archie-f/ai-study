@@ -1,5 +1,6 @@
 import os
 import time
+from typing import Any, Generator
 
 import anthropic
 from anthropic.types import MessageParam, TextBlock
@@ -12,9 +13,12 @@ load_dotenv()
 class AnthropicProvider(LLMProvider):
     """Anthropic Claude via the Anthropic SDK."""
 
-    def __init__(self, model: str = os.getenv("ANTHROPIC_MODEL_NAME")) -> None:
+    def __init__(self, model: str | None = None) -> None:
         self.client = anthropic.Anthropic()
-        self.model = model
+        # model defaults resolved here, not in the signature, so a later
+        # load_dotenv() call still takes effect (signature defaults are
+        # bound once, at import time, and would freeze an unset env var).
+        self.model = model or os.getenv("ANTHROPIC_MODEL_NAME") or "claude-sonnet-4-6"
 
     def ask(self, user_input: str, system_prompt: str = '', temperature: float = 0.7) -> LLMResult:
         """Call Anthropic messages create and return unified LLMResult.

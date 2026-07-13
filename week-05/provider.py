@@ -16,7 +16,7 @@ class LLMResult:
     judge_score: float | None = None
     judge_reason: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.cost = self.cost_usd()
 
     def cost_usd(self) -> float:
