@@ -13,6 +13,7 @@ from eval_types import EvalCase, EvalResult
 
 sys.path.append(str(Path(__file__).parent.parent / 'week-07'))
 from cost_dashboard import log_run
+from retry_backoff import retry_with_backoff
 
 TRUNCATE_AT: int = 60
 RESULTS_DIR: Path = Path('results')
@@ -51,7 +52,7 @@ def run_comparison(
     comparison_results = ComparisonResult(prompt=prompt)
     for provider in providers:
         try:
-            result = provider.ask(user_input=prompt, system_prompt=system_prompt)
+            result = retry_with_backoff(lambda: provider.ask(user_input=prompt, system_prompt=system_prompt))
         except ProviderError as e:
             result = LLMResult(
                 provider=e.provider_name,
