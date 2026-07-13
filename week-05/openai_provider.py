@@ -1,4 +1,5 @@
 import time
+from typing import Any, Generator
 
 import openai
 from openai import OpenAI

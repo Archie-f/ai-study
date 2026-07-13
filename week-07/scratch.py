@@ -98,13 +98,17 @@ def ask_stream(
         system_prompt: str = ''
 ) -> Generator[str, Any, LLMResult]:
     client = anthropic.Anthropic()
+    # resolved once, with a real fallback, instead of passing os.getenv(...)
+    # (str | None) straight into calls that expect a str — same bug already
+    # fixed for real in week-05/anthropic_provider.py.
+    model_name: str = os.getenv("ANTHROPIC_MODEL_NAME") or "claude-sonnet-4-6"
     prompt: list[MessageParam] = [
         {"role": "user", "content": input_text}
     ]
     response: str = ""
     start_time: float = time.perf_counter()
     with client.messages.stream(
-        model=os.getenv("ANTHROPIC_MODEL_NAME"),
+        model=model_name,
         max_tokens=256,
         system=system_prompt,
         messages=prompt,
@@ -116,7 +120,7 @@ def ask_stream(
     elapsed_time = (time.perf_counter() - start_time) * 1000
     return LLMResult(
         provider="claude",
-        model=os.getenv("ANTHROPIC_MODEL_NAME"),
+        model=model_name,
         text=response,
         tokens_in=final_message.usage.input_tokens,
         tokens_out=final_message.usage.output_tokens,
