@@ -1,12 +1,13 @@
 import os
 import time
+from typing import Generator, Any
 
 import groq
 from openai import OpenAI
 from openai.types.chat import (
     ChatCompletionMessageParam,
     ChatCompletionSystemMessageParam,
-    ChatCompletionUserMessageParam,
+    ChatCompletionUserMessageParam, ChatCompletionStreamOptionsParam,
 )
 from provider import LLMProvider, LLMResult, ProviderError
 
@@ -55,6 +56,66 @@ class GroqProvider(LLMProvider):
                 text=response.choices[0].message.content,
                 tokens_in=response.usage.prompt_tokens,
                 tokens_out=response.usage.completion_tokens,
+                latency_ms=round(elapsed_time),
+            )
+        except groq.RateLimitError as e:
+            raise ProviderError(
+                provider_name="groq",
+                original_error=e,
+                retryable=True
+            ) from e
+        except groq.APITimeoutError as e:
+            raise ProviderError(
+                provider_name="groq",
+                original_error=e,
+                retryable=True
+            ) from e
+        except (KeyError, AttributeError) as e:
+            raise ProviderError(
+                provider_name="groq",
+                original_error=e,
+                retryable=False
+            ) from e
+
+    def ask_stream(self, user_input: str, system_prompt: str = '') -> Generator[str, Any, LLMResult]:
+        """Yield response text chunks as they arrive from Groq's streaming API."""
+        system_turn: ChatCompletionSystemMessageParam = {
+            "role": "system",
+            "content": system_prompt
+        }
+        user_turn: ChatCompletionUserMessageParam = {
+            "role": "user",
+            "content": user_input
+        }
+        prompt: list[ChatCompletionMessageParam] = [system_turn, user_turn]
+        response_text: str = ""
+        tokens_in: int = 0
+        tokens_out: int = 0
+        start_time: float = time.perf_counter()
+        stream_options: ChatCompletionStreamOptionsParam = {"include_usage": True}
+        try:
+            stream = self.client.chat.completions.create(
+                model=self.model,
+                max_tokens=256,
+                messages=prompt,
+                stream=True,
+                stream_options=stream_options,
+            )
+            for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    text = chunk.choices[0].delta.content
+                    response_text += text
+                    yield text
+                if chunk.usage is not None:
+                    tokens_in = chunk.usage.prompt_tokens
+                    tokens_out = chunk.usage.completion_tokens
+            elapsed_time: float = (time.perf_counter() - start_time) * 1000
+            return LLMResult(
+                provider='groq',
+                model=self.model,
+                text=response_text,
+                tokens_in=tokens_in,
+                tokens_out=tokens_out,
                 latency_ms=round(elapsed_time),
             )
         except groq.RateLimitError as e:

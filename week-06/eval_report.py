@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import json
 from pathlib import Path
 
@@ -104,6 +105,47 @@ def generate_report(all_results: dict[str, list[EvalResult]]) -> None:
                     f"Score: {str(score):<5} Reason: {reason}"
                 )
 
+def build_report_markdown(all_results: dict[str, list[EvalResult]]) -> str:
+    """Build the report as a Markdown string (pass/fail + cost/latency)."""
+    lines = []
+    total = sum(len(r) for r in all_results.values())
+    passed = sum(1 for r in all_results.values() for x in r if x.passed)
+    lines.append("# Eval Report")
+    lines.append(f"**Overall Pass Rate:** {passed}/{total} ({passed / total:.0%})")
+
+    lines.append("\n## Pass Rate, Cost & Latency — Per Provider\n")
+    lines.append("| Provider | Pass Rate | Total Cost (USD) | Avg Latency (ms) |")
+    lines.append("|---|---|---|---|")
+    for provider_name, results in all_results.items():
+        p = sum(1 for r in results if r.passed)
+        t = len(results)
+        cost = sum(r.cost or 0 for r in results)
+        latencies = [r.latency_ms for r in results if r.latency_ms is not None]
+        avg_latency = sum(latencies) / len(latencies) if latencies else 0
+        lines.append(
+            f"| {provider_name} | {p}/{t} ({p / t:.0%}) | "
+            f"${cost:.4f} | {avg_latency:.0f} |"
+        )
+
+    lines.append("\n## Failure Details\n")
+    for provider_name, results in all_results.items():
+        for r in results:
+            if not r.passed:
+                lines.append(f"- **{provider_name}** — {r.case.prompt[:40]}... — {r.reason[:60]}")
+
+    return "\n".join(lines)
+
+def save_report(all_results: dict[str, list[EvalResult]], results_dir: Path) -> Path:
+    """Write the Markdown report to results/report_<timestamp>.md. Returns the path."""
+    results_dir.mkdir(exist_ok=True)
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+    path = results_dir / f"report_{timestamp}.md"
+    path.write_text(build_report_markdown(all_results))
+    print(f"Report saved to {path}")
+    return path
+
+
+
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Generate an eval report from a batch results file.")
     parser.add_argument(
@@ -128,6 +170,7 @@ if __name__=="__main__":
 
     all_eval_results = load_results(results_path)
     generate_report(all_eval_results)
+    save_report(all_eval_results, RESULTS_DIR)
 
     if args.check_regression:
         baseline = load_baseline(args.check_regression)
@@ -139,4 +182,3 @@ if __name__=="__main__":
             print(f"REGRESSION DETECTED in: {', '.join(regressed)}")
         else:
             print("No regressions detected.")
-

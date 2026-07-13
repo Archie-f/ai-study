@@ -7,7 +7,10 @@ from exact_match import score_exact
 from llm_judge import score_with_llm
 
 sys.path.append(str(Path(__file__).parent.parent / "week-05"))
-from provider import LLMProvider
+from provider import LLMResult, LLMProvider, ProviderError
+
+sys.path.append(str(Path(__file__).parent.parent / 'week-07'))
+from retry_backoff import retry_with_backoff
 
 SCORER_DISPATCH: dict[str, Callable] = {
     "factual":       score_exact,
@@ -38,15 +41,34 @@ def run_eval(
     """
     results = []
     for case in cases:
-        output = provider.ask(user_input=case.prompt, system_prompt=system_prompt).text
+        try:
+            llm_result = retry_with_backoff(lambda: provider.ask(user_input=case.prompt, system_prompt=system_prompt))
+        except ProviderError as e:
+            llm_result = LLMResult(
+                provider=e.provider_name,
+                model='unknown',
+                text='',
+                tokens_in=0,
+                tokens_out=0,
+                latency_ms=0,
+                judge_score=None,
+                judge_reason=f"ERROR: {e}",
+            )
+        output = llm_result.text
         scorer = get_scorer(case.category)
 
         if scorer is score_with_llm and judge:
-            results.append(scorer(case, output, judge))
+            eval_result = scorer(case, output, judge)
         elif scorer is score_with_llm and not judge:
-            results.append(score_exact(case, output))
+            eval_result = score_exact(case, output)
         else:
-            results.append(scorer(case, output))
+            eval_result = scorer(case, output)
+
+        eval_result.tokens_in = llm_result.tokens_in
+        eval_result.tokens_out = llm_result.tokens_out
+        eval_result.cost = llm_result.cost
+        eval_result.latency_ms = llm_result.latency_ms
+        results.append(eval_result)
 
     return results
 

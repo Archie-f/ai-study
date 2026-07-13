@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from typing import Generator, Any
 
 
 @dataclass
@@ -15,7 +16,7 @@ class LLMResult:
     judge_score: float | None = None
     judge_reason: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.cost = self.cost_usd()
 
     def cost_usd(self) -> float:
@@ -37,6 +38,16 @@ class LLMProvider(ABC):
     @abstractmethod
     def ask(self, user_input: str, system_prompt: str = '') -> LLMResult:
         """Send prompt to the LLM and return a unified LLMResult."""
+
+    @abstractmethod
+    def ask_stream(self, user_input: str, system_prompt: str = '') -> Generator[str, Any, LLMResult]:
+        """Yield response text chunks as they arrive from the provider.
+
+        Once the underlying stream is exhausted, the generator should make
+        the equivalent LLMResult available to the caller (via the generator's
+        return value, a filled-in mutable object, or another approach of your
+        choosing) so streaming callers don't lose token/cost/latency tracking.
+        """
 
 class ProviderError(Exception):
     def __init__(
