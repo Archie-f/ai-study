@@ -6,7 +6,7 @@
 - **Day 02 — Streaming Responses:** `provider.py` gained `ask_stream()`; implemented for `AnthropicProvider`. `streaming_demo.py` — a provider-agnostic stream consumer using the generator `next()`/`StopIteration` pattern.
 - **Day 03 — Cost & Latency Dashboard:** `cost_dashboard.py` — `log_run()`, `tracked_call()`, `summarize()` (per-provider calls/cost/latency/quality), plus CSV and Markdown report generators. Also closed a gap left over from Week 06: `eval_harness.py` now keeps the full `LLMResult` instead of discarding it, and `eval_report.py` persists `results/report_<timestamp>.md` instead of only printing.
 - **Day 04 — Model Selection & Resilience:** `retry_backoff.py` — `retry_with_backoff()` with exponential backoff, jitter, and a longer dedicated delay for rate-limit errors. Wired into both `compare.py` and `eval_harness.py`, so a single bad API call no longer crashes a batch. `model_selection_notes.md` — a real cost/latency/quality decision guide from an actual 4-provider batch run.
-- **Day 05 — Consolidate & Ship:** Flattened `week-07/` to match `week-05/`/`week-06/`'s layout; fixed remaining bugs in the cost report generators; this file.
+- **Day 05 — Consolidate & Ship:** Flattened `week-07/` to match `week-05/`/`week-06/`'s layout; fixed remaining bugs in the cost report generators; `week-07/` and `week-05/` now pass `mypy --strict` cleanly (fixed missing type annotations, bare `dict` generics, and a `Generator`/`Any` re-export gap in the provider modules); `requirements.txt` cleaned up (dropped a duplicate `groq` line and two unused packages, added version floors); added a `ruff.toml` documenting two deliberate repo-wide style choices; this file.
 
 ## Key Decisions
 
@@ -18,6 +18,6 @@
 
 ## Deferred / Known Gaps
 
-- `AnthropicProvider`'s model default (`os.getenv(...)`) is read once at import time rather than per call — flagged Day 02, not yet fixed.
-- `mypy --strict` and the full test suite haven't been run as a gate yet — Day 05 Task 3.
-- Sandbox-only quirks, not real bugs: `enum.StrEnum` (3.11+) fails to import on this sandbox's Python 3.10; f-string expressions reusing the outer quote character need Python 3.12+. Both are fine on Akif's real Python 3.14.
+- **CI is red on `main`.** `ruff check .` still fails on 33 pre-existing `F403`/`F405` errors caused by `from provider import *` in `week-05`'s three provider modules (`anthropic_provider.py`, `openai_provider.py`, `ollama_provider.py`) — predates this week, not something introduced here. Fix is a real one: convert each to explicit imports. Deferred to a future week.
+- A handful of smaller pre-existing `ruff` findings outside this week's scope (an unused import in `compare.py`, one in `week-06/tests/test_scored_compare.py`, etc.) — untouched.
+- `mypy --strict` and `ruff check .` were resolved for everything shipped this week (`week-07/` is fully clean under both); `scratch.py` is intentionally excluded from the `mypy` gate (exploratory/practice code, not a shipped module) via `mypy.ini`.

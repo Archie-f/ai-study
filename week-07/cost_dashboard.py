@@ -98,7 +98,7 @@ def generate_cost_summary_csv(summary: dict[str, dict[str, Any]], out_path: Path
 def generate_cost_summary_markdown(summary: dict[str, dict[str, Any]], out_path: Path | None = None) -> Path:
     if out_path is None: out_path = RESULTS_PATH
 
-    lines = [f"# Summary Report", "\n## Number of calls, Cost, Latency and Quality — Per Provider\n",
+    lines = ["# Summary Report", "\n## Number of calls, Cost, Latency and Quality — Per Provider\n",
              "| Provider | Calls | Total Cost (USD) | Avg Latency (ms) | Quality |", "|---|---|---|---|---|"]
 
     for provider in summary.keys():

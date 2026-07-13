@@ -1,0 +1,14 @@
+[lint]
+# E701: "if x is None: x = default" one-liners are a deliberate, pervasive
+# style choice throughout this project (weeks 05-07) for resolving
+# None-defaulted parameters — not something we're rewriting to satisfy the
+# linter.
+#
+# E402: every week-05/06/07 module that imports across week folders does
+# `sys.path.append(...)` immediately before the import it enables (there's
+# no installable package structure tying the weeks together). That's the
+# project's own cross-week import convention, not accidental import
+# ordering — it shows up far beyond scratch.py (run_all_providers.py,
+# run_mini_eval.py, scored_compare.py, etc.), so it's ignored repo-wide
+# rather than per-file.
+ignore = ["E701", "E402"]
