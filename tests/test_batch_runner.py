@@ -5,11 +5,10 @@ from unittest.mock import MagicMock
 import pytest
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from eval_types import EvalCase
-from batch_runner import run_batch
-from eval_dataset import EVAL_DATASET
-from eval_harness import SCORER_DISPATCH
-from batch_runner import estimate_cost
+from src.llm_compare.eval.types import EvalCase
+from src.llm_compare.eval.batch_runner import run_batch, estimate_cost
+from src.llm_compare.eval.dataset import EVAL_DATASET
+from src.llm_compare.eval.harness import SCORER_DISPATCH
 
 eval_dataset: list[EvalCase] = [
         EvalCase(

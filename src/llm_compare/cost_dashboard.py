@@ -2,7 +2,6 @@ import base64
 import csv
 import dataclasses
 import json
-import sys
 from io import BytesIO
 
 import matplotlib.pyplot as plt
@@ -11,10 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-sys.path.append(str(Path(__file__).resolve().parent.parent / 'week-05'))
-from provider import LLMResult, LLMProvider
-from openai_provider import OpenAIProvider
-
+from .providers.base import LLMResult, LLMProvider
 
 LOG_PATH: Path = Path(__file__).parent / "results" / "cost_log.jsonl"
 CSV_PATH: Path = Path(__file__).parent / "results" / "cost_summary.csv"
@@ -268,7 +264,7 @@ def generate_cost_summary_html(
     return path
 
 
-def run_comparison_batch(prompts: list[str], providers: list[LLMProvider]) -> None:
+def run_comparison_batch(prompts: list[str], providers: list[LLMProvider], judge: LLMProvider) -> None:
     """Run a batch of prompts through run_comparison(), then report cost,
     latency, and quality for just this batch.
 
@@ -284,11 +280,11 @@ def run_comparison_batch(prompts: list[str], providers: list[LLMProvider]) -> No
     Args:
         prompts: The prompts to run through every provider.
         providers: The LLMProvider instances to compare.
+        judge: The LLMJudge instance as judge.
     """
-    from compare import run_comparison
+    from .compare import run_comparison
 
     since = datetime.now().isoformat(timespec="seconds")
-    judge = OpenAIProvider()
     for prompt in prompts:
         run_comparison(prompt, providers, judge=judge)
 
@@ -300,18 +296,7 @@ def run_comparison_batch(prompts: list[str], providers: list[LLMProvider]) -> No
 
 
 if __name__ == "__main__":
-    import sys
-
-    sys.path.insert(0, '../week-05')
     from dotenv import load_dotenv
-
     load_dotenv('../.env')
-
-    # from anthropic_provider import AnthropicProvider
-    #
-    #
-    # provider = AnthropicProvider()
-    # result = tracked_call(provider, "Reply with exactly one word: hello")
-    # print(result)
 
     print(summarize(LOG_PATH))

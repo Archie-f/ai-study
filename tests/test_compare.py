@@ -2,8 +2,8 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-from provider import LLMProvider, LLMResult
-from compare import run_comparison, ComparisonResult, save_to_json, load_from_json
+from src.llm_compare.providers.base import LLMProvider, LLMResult
+from src.llm_compare.compare import run_comparison, ComparisonResult, save_to_json, load_from_json
 
 
 def generate_test_providers_list() -> list[LLMProvider]:

@@ -1,24 +1,19 @@
-import sys
-from pathlib import Path
 from typing import Callable, Union
 
-from eval_types import EvalCase, EvalResult
-from exact_match import score_exact
-from llm_judge import score_with_llm
+from .types import EvalCase, EvalResult
+from .exact_match import score_exact
+from .judge import score_with_llm
 
-sys.path.append(str(Path(__file__).parent.parent / "week-05"))
-from provider import LLMResult, LLMProvider, ProviderError
+from ..providers.base import LLMResult, LLMProvider, ProviderError
+from ..retry_backoff import retry_with_backoff
 
-sys.path.append(str(Path(__file__).parent.parent / 'week-07'))
-from retry_backoff import retry_with_backoff
-
-SCORER_DISPATCH: dict[str, Callable] = {
+SCORER_DISPATCH: dict[str, Callable[..., EvalResult]] = {
     "factual":       score_exact,
     "sentiment":     score_exact,
     "summarization": score_with_llm,
 }
 
-def get_scorer(category: str) -> Callable:
+def get_scorer(category: str) -> Callable[..., EvalResult]:
     """Return scorer type for a given category. Defaults to exact."""
     if category not in SCORER_DISPATCH:
         raise ValueError(f"Unknown category: {category!r}. Add it to SCORER_DISPATCH.")

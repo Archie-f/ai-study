@@ -1,19 +1,14 @@
 import dataclasses
 import json
-import sys
 from datetime import datetime
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from provider import LLMProvider, LLMResult, ProviderError
-
-sys.path.append(str(Path(__file__).parent.parent / 'week-06'))
-from llm_judge import score_with_llm
-from eval_types import EvalCase, EvalResult
-
-sys.path.append(str(Path(__file__).parent.parent / 'week-07'))
-from cost_dashboard import log_run
-from retry_backoff import retry_with_backoff
+from .providers.base import LLMProvider, LLMResult, ProviderError
+from .eval.judge import score_with_llm
+from .eval.types import EvalCase
+from .cost_dashboard import log_run
+from .retry_backoff import retry_with_backoff
 
 TRUNCATE_AT: int = 60
 RESULTS_DIR: Path = Path('results')
@@ -152,10 +147,10 @@ if __name__ == '__main__':
 
     load_dotenv()
 
-    from anthropic_provider import AnthropicProvider
-    from openai_provider import OpenAIProvider
-    from ollama_provider import OllamaProvider
-    from groq_provider import GroqProvider
+    from .providers.anthropic_provider import AnthropicProvider
+    from .providers.openai_provider import OpenAIProvider
+    from .providers.ollama_provider import OllamaProvider
+    from .providers.groq_provider import GroqProvider
 
     inp: str = "Explain what an API is in one sentence."
     system_message: str = 'You are a helpful assistant.'

@@ -4,7 +4,8 @@ import json
 def load_baseline(path: str) -> dict[str, float]:
     """Load a baseline dict[str, float] of previously recorded pass rates."""
     with open(path) as f:
-        return json.load(f)
+        data: dict[str, float] = json.load(f)
+        return data
 
 def check_regression(
     baseline: dict[str, float],

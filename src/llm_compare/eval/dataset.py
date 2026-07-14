@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from eval_types import EvalCase
+from .types import EvalCase
 
 class Category(StrEnum):
     """The category of an Eval."""

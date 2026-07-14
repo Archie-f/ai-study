@@ -1,14 +1,9 @@
-import sys
-from pathlib import Path
 from typing import Any, Generator
 
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent / 'week-05'))
-
-from streaming_demo import print_stream_and_collect_result
-from provider import LLMResult
+from src.llm_compare.streaming import print_stream_and_collect_result
+from src.llm_compare.providers.base import LLMResult
 
 
 def fake_stream(chunks: list[str], result: LLMResult) -> Generator[str, Any, LLMResult]:

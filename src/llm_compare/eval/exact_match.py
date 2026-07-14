@@ -1,4 +1,4 @@
-from eval_types import EvalCase, EvalResult
+from .types import EvalCase, EvalResult
 
 def normalize(text: str) -> str:
     """Normalize a string by cleaning noise symbols and changing to lowercase."""
@@ -18,4 +18,3 @@ def score_exact(case: EvalCase, actual: str) -> EvalResult:
         passed=is_match,
         reason='Exact match' if is_match else f'Expected: {cleaned_expected!r}, got {cleaned_actual!r}',
     )
-

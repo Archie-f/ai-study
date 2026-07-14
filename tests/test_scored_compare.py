@@ -3,8 +3,8 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent / 'week-05'))
-from compare import ComparisonResult, run_comparison, print_table
-from provider import LLMResult
+from src.llm_compare.compare import run_comparison
+from src.llm_compare.providers.base import LLMResult
 
 
 prompt: str = "Explain what is API in one sentence."

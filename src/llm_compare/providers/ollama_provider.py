@@ -1,11 +1,11 @@
 import json
 import os
 import time
-from typing import Any, Generator
+from typing import Generator, Any
 
 import requests
 
-from provider import *
+from .base import LLMProvider, LLMResult
 
 class OllamaProvider(LLMProvider):
     def __init__(self, model: str = "llama3"):
@@ -25,7 +25,7 @@ class OllamaProvider(LLMProvider):
         try:
             start_time: float = time.perf_counter()
             response = requests.post(
-                f"{os.getenv("OLLAMA_BASE_URL")}/api/chat",
+                f"{os.getenv('OLLAMA_BASE_URL')}/api/chat",
                 json={
                     "model": self.model,
                     "messages": [

@@ -1,13 +1,7 @@
-import sys
-from pathlib import Path
-
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent / 'week-05'))
-from provider import LLMResult, ProviderError
-
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent / 'week-07'))
-from retry_backoff import retry_with_backoff
+from src.llm_compare.providers.base import LLMResult, ProviderError
+from src.llm_compare.retry_backoff import retry_with_backoff
 
 SUCCESS_RESULT = LLMResult(
     provider="test", model="fake", text="success",

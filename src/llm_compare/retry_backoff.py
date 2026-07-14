@@ -1,11 +1,8 @@
 import random
-import sys
 import time
-from pathlib import Path
 from typing import Callable
 
-sys.path.append(str(Path(__file__).resolve().parent.parent / 'week-05'))
-from provider import LLMResult, ProviderError
+from .providers.base import LLMResult, ProviderError
 
 def retry_with_backoff(
         fn: Callable[[], LLMResult],

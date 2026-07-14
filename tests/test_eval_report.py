@@ -2,10 +2,10 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from eval_types import EvalCase, EvalResult
-from eval_dataset import Category
-from eval_report import get_pass_rates_per_category, get_pass_rates_per_provider
-from regression_check import check_regression
+from src.llm_compare.eval.types import EvalCase, EvalResult
+from src.llm_compare.eval.dataset import Category
+from src.llm_compare.eval.report import get_pass_rates_per_category, get_pass_rates_per_provider
+from src.llm_compare.eval.regression_check import check_regression
 
 
 def make_result(provider_category: str, passed: bool) -> EvalResult:

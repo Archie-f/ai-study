@@ -1,12 +1,9 @@
 import json
-import sys
-from pathlib import Path
 
-from eval_types import EvalCase, EvalResult
+from .types import EvalCase, EvalResult
 
-sys.path.append(str(Path(__file__).parent.parent / "week-05"))
-from provider import LLMProvider, LLMResult
-from anthropic_provider import AnthropicProvider
+from ..providers.base import LLMProvider, LLMResult
+from ..providers.anthropic_provider import AnthropicProvider
 
 JUDGE_SYSTEM_PROMPT = '''
 You are an impartial evaluator. You will be given:

@@ -1,15 +1,13 @@
 import dataclasses
 import datetime
 import json
-import sys
 from pathlib import Path
 from typing import Optional
 
-from eval_types import EvalCase, EvalResult
-from eval_harness import run_eval
+from .types import EvalCase, EvalResult
+from .harness import run_eval
 
-sys.path.append(str(Path(__file__).parent.parent / 'week-05'))
-from provider import LLMProvider
+from ..providers.base import LLMProvider
 
 PRICING = {
     "claude":  {"input": 1.00 / 1_000_000, "output": 5.00 / 1_000_000},

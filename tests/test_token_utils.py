@@ -1,10 +1,6 @@
-import sys
-from pathlib import Path
-
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-from token_utils import estimate_cost
+from src.llm_compare.token_utils import estimate_cost
 
 def test_estimate_cost_returns_correct_dollar_amount() -> None:
     """estimate_cost() should return the exact sum of input + output cost for known token counts."""

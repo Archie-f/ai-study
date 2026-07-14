@@ -3,9 +3,8 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from cost_dashboard import log_run, summarize
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent / 'week-05'))
-from provider import LLMResult
+from src.llm_compare.cost_dashboard import log_run, summarize
+from src.llm_compare.providers.base import LLMResult
 
 
 results = [
@@ -68,5 +67,3 @@ def test_summarize_returns_correct_totals_per_provider(tmp_path: Path) -> None:
     assert ollama_provider["calls"] == 4
     assert ollama_provider["total_cost"] == 0.0
     assert ollama_provider["avg_latency_ms"] == 3452.2
-
-

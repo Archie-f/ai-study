@@ -1,12 +1,12 @@
 import os
 import time
-from typing import Any, Generator
+from typing import Generator, Any
 
 import anthropic
 from anthropic.types import MessageParam, TextBlock
 from dotenv import load_dotenv
 
-from provider import *
+from .base import LLMProvider, LLMResult, ProviderError
 
 load_dotenv()
 

@@ -1,28 +1,25 @@
-import os
 import time
 from typing import Generator, Any
 
-import groq
+import openai
 from openai import OpenAI
 from openai.types.chat import (
     ChatCompletionMessageParam,
     ChatCompletionSystemMessageParam,
-    ChatCompletionUserMessageParam, ChatCompletionStreamOptionsParam,
+    ChatCompletionUserMessageParam, ChatCompletionStreamOptionsParam
 )
-from provider import LLMProvider, LLMResult, ProviderError
+
+from .base import LLMProvider, LLMResult, ProviderError
 
 
-class GroqProvider(LLMProvider):
-    def __init__(self, model: str = 'llama-3.1-8b-instant') -> None:
-        """Initialize Groq client and store model name."""
-        self.client = OpenAI(
-            base_url=os.getenv("GROQ_BASE_URL"),
-            api_key=os.getenv("GROQ_API_KEY")
-        )
+class OpenAIProvider(LLMProvider):
+    def __init__(self, model: str = 'gpt-4o-mini') -> None:
+        """Initialize OpenAI client and store model name."""
+        self.client = OpenAI()
         self.model = model
 
     def ask(self, user_input: str, system_prompt: str = '') -> LLMResult:
-        """Call Groq chat completions and return unified LLMResult.
+        """Call OpenAI chat completions and return unified LLMResult.
 
             Args:
                 user_input: Input to ask user to enter chat.
@@ -51,34 +48,34 @@ class GroqProvider(LLMProvider):
             assert response.choices[0].message.content is not None
             assert response.usage is not None
             return LLMResult(
-                provider='groq',
+                provider='open_ai',
                 model=self.model,
                 text=response.choices[0].message.content,
                 tokens_in=response.usage.prompt_tokens,
                 tokens_out=response.usage.completion_tokens,
                 latency_ms=round(elapsed_time),
             )
-        except groq.RateLimitError as e:
+        except openai.RateLimitError as e:
             raise ProviderError(
-                provider_name="groq",
+                provider_name="openai",
                 original_error=e,
                 retryable=True
             ) from e
-        except groq.APITimeoutError as e:
+        except openai.APITimeoutError as e:
             raise ProviderError(
-                provider_name="groq",
+                provider_name="openai",
                 original_error=e,
                 retryable=True
             ) from e
         except (KeyError, AttributeError) as e:
             raise ProviderError(
-                provider_name="groq",
+                provider_name="openai",
                 original_error=e,
                 retryable=False
             ) from e
 
     def ask_stream(self, user_input: str, system_prompt: str = '') -> Generator[str, Any, LLMResult]:
-        """Yield response text chunks as they arrive from Groq's streaming API."""
+        """Yield response text chunks as they arrive from OpenAI's streaming API."""
         system_turn: ChatCompletionSystemMessageParam = {
             "role": "system",
             "content": system_prompt
@@ -111,28 +108,28 @@ class GroqProvider(LLMProvider):
                     tokens_out = chunk.usage.completion_tokens
             elapsed_time: float = (time.perf_counter() - start_time) * 1000
             return LLMResult(
-                provider='groq',
+                provider='open_ai',
                 model=self.model,
                 text=response_text,
                 tokens_in=tokens_in,
                 tokens_out=tokens_out,
                 latency_ms=round(elapsed_time),
             )
-        except groq.RateLimitError as e:
+        except openai.RateLimitError as e:
             raise ProviderError(
-                provider_name="groq",
+                provider_name="openai",
                 original_error=e,
                 retryable=True
             ) from e
-        except groq.APITimeoutError as e:
+        except openai.APITimeoutError as e:
             raise ProviderError(
-                provider_name="groq",
+                provider_name="openai",
                 original_error=e,
                 retryable=True
             ) from e
         except (KeyError, AttributeError) as e:
             raise ProviderError(
-                provider_name="groq",
+                provider_name="openai",
                 original_error=e,
                 retryable=False
             ) from e

@@ -1,6 +1,11 @@
+import sys
+from pathlib import Path
+
 import pytest
-from unittest.mock import MagicMock, patch
-from provider import LLMResult, ProviderError
+from unittest.mock import MagicMock
+from src.llm_compare.providers.base import LLMResult, ProviderError
+
+sys.path.append(str(Path(__file__).resolve().parent.parent / 'week-05'))
 from robust_client import with_retry, ProviderChain
 
 
@@ -21,7 +26,7 @@ class TestWithRetry:
         call_count = 0
 
         @with_retry(max_attempts=3, base_delay=0)  # base_delay=0 → no sleep in tests
-        def flaky(prompt: str) -> LLMResult:
+        def flaky() -> LLMResult:
             nonlocal call_count
             call_count += 1
             if call_count < 3:
@@ -36,7 +41,7 @@ class TestWithRetry:
         call_count = 0
 
         @with_retry(max_attempts=3, base_delay=0)
-        def always_broken(prompt: str) -> LLMResult:
+        def always_broken() -> LLMResult:
             nonlocal call_count
             call_count += 1
             raise ProviderError("test", KeyError("content"), retryable=False)
@@ -47,7 +52,7 @@ class TestWithRetry:
 
     def test_all_retries_exhausted_raises(self):
         @with_retry(max_attempts=3, base_delay=0)
-        def always_fails(prompt: str) -> LLMResult:
+        def always_fails() -> LLMResult:
             raise ProviderError("test", ValueError("busy"), retryable=True)
 
         with pytest.raises(ProviderError):

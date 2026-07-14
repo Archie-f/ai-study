@@ -2,19 +2,21 @@ import argparse
 import datetime
 import json
 from pathlib import Path
+from typing import Any
 
-from eval_dataset import Category
-from eval_types import EvalCase, EvalResult
-from regression_check import load_baseline, check_regression
+from .dataset import Category
+from .types import EvalCase, EvalResult
+from .regression_check import load_baseline, check_regression
 
 
 def load_results(path: str) -> dict[str, list[EvalResult]]:
-    data = json.loads(Path(path).read_text())
+    raw: dict[str, list[dict[str, Any]]] = json.loads(Path(path).read_text())
 
-    for llm in data.keys():
-        for r in data[llm]:
+    data: dict[str, list[EvalResult]] = {}
+    for llm in raw:
+        for r in raw[llm]:
             r["case"] = EvalCase(**r["case"])
-        data[llm] = [EvalResult(**r) for r in data[llm]]
+        data[llm] = [EvalResult(**r) for r in raw[llm]]
 
     return data
 
