@@ -1,0 +1,2 @@
+[console_scripts]
+llm-compare = llm_compare.cli:main

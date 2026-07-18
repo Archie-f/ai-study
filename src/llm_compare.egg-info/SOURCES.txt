@@ -1,6 +1,7 @@
 README.md
 pyproject.toml
 src/llm_compare/__init__.py
+src/llm_compare/cli.py
 src/llm_compare/compare.py
 src/llm_compare/cost_dashboard.py
 src/llm_compare/retry_backoff.py
@@ -9,6 +10,7 @@ src/llm_compare/token_utils.py
 src/llm_compare.egg-info/PKG-INFO
 src/llm_compare.egg-info/SOURCES.txt
 src/llm_compare.egg-info/dependency_links.txt
+src/llm_compare.egg-info/entry_points.txt
 src/llm_compare.egg-info/requires.txt
 src/llm_compare.egg-info/top_level.txt
 src/llm_compare/eval/__init__.py

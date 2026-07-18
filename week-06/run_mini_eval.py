@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 
 from llm_compare.eval.types import EvalCase, EvalResult
 from llm_compare.eval.harness import run_eval, print_report
-from llm_compare.eval.dataset import EVAL_DATASET
+from llm_compare.eval.dataset import load_eval_dataset
 from llm_compare.eval.batch_runner import run_batch
 from llm_compare.eval.report import generate_report
 
@@ -65,4 +65,5 @@ def run_batch_runner(cases: list[EvalCase]):
     generate_report(all_results)
 
 if __name__ == "__main__":
-    run_batch_runner(EVAL_DATASET)
+    dataset = load_eval_dataset()
+    run_batch_runner(dataset)
