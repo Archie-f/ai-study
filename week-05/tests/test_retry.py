@@ -1,7 +1,12 @@
+import sys
+from pathlib import Path
+
 import pytest
-from unittest.mock import MagicMock, patch
-from provider import LLMResult, ProviderError
-from robust_client import with_retry, ProviderChain
+from unittest.mock import MagicMock
+from src.llm_compare.providers.base import LLMResult, ProviderError
+
+sys.path.append(str(Path(__file__).resolve().parent.parent / 'week-05'))
+from robust_client import ProviderChain
 
 
 def make_result(provider_name: str = "test") -> LLMResult:
@@ -13,45 +18,6 @@ def make_result(provider_name: str = "test") -> LLMResult:
         tokens_out=5,
         latency_ms=100,
     )
-
-
-class TestWithRetry:
-
-    def test_retries_on_retryable_error_and_succeeds(self):
-        call_count = 0
-
-        @with_retry(max_attempts=3, base_delay=0)  # base_delay=0 → no sleep in tests
-        def flaky(prompt: str) -> LLMResult:
-            nonlocal call_count
-            call_count += 1
-            if call_count < 3:
-                raise ProviderError("test", ValueError("busy"), retryable=True)
-            return make_result()
-
-        result = flaky("hi")
-        assert call_count == 3
-        assert result.text == "hello"
-
-    def test_non_retryable_fails_immediately(self):
-        call_count = 0
-
-        @with_retry(max_attempts=3, base_delay=0)
-        def always_broken(prompt: str) -> LLMResult:
-            nonlocal call_count
-            call_count += 1
-            raise ProviderError("test", KeyError("content"), retryable=False)
-
-        with pytest.raises(ProviderError):
-            always_broken("hi")
-        assert call_count == 1  # called exactly once — no retries
-
-    def test_all_retries_exhausted_raises(self):
-        @with_retry(max_attempts=3, base_delay=0)
-        def always_fails(prompt: str) -> LLMResult:
-            raise ProviderError("test", ValueError("busy"), retryable=True)
-
-        with pytest.raises(ProviderError):
-            always_fails("hi")
 
 
 class TestProviderChain:

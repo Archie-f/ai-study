@@ -1,34 +1,9 @@
 import logging
-import time
-import functools
-from typing import Callable, TypeVar
+
+
 from provider import LLMProvider, LLMResult, ProviderError
 
-T = TypeVar("T")
 logger = logging.getLogger(__name__)
-
-
-def with_retry(max_attempts: int = 3, base_delay: float = 1.0) -> Callable:
-    def decorator(fn: Callable[..., T]) -> Callable[..., T]:
-        @functools.wraps(fn)
-        def wrapper(*args, **kwargs) -> T:
-            last_error: ProviderError | None = None
-            for attempt in range(max_attempts):
-                try:
-                    return fn(*args, **kwargs)
-                except ProviderError as e:
-                    last_error = e
-                    if not e.retryable:
-                        raise  # fail immediately, don't retry
-                    if attempt < max_attempts - 1:
-                        delay = base_delay * (2 ** attempt)
-                        print(f"  Retry {attempt + 1}/{max_attempts - 1} "
-                              f"after {delay:.1f}s — {e}")
-                        time.sleep(delay)
-            assert last_error is not None  # loop always runs at least once
-            raise last_error  # all attempts exhausted
-        return wrapper
-    return decorator
 
 class ProviderChain:
     def __init__(self, providers: list[LLMProvider]) -> None:

@@ -1,22 +1,18 @@
-import sys
-from pathlib import Path
-
 from dotenv import load_dotenv
 
-from eval_types import EvalCase, EvalResult
-from eval_harness import run_eval, print_report
-from eval_dataset import EVAL_DATASET
-from batch_runner import run_batch
-from eval_report import generate_report
+from llm_compare.eval.types import EvalCase, EvalResult
+from llm_compare.eval.harness import run_eval, print_report
+from llm_compare.eval.dataset import load_eval_dataset
+from llm_compare.eval.batch_runner import run_batch
+from llm_compare.eval.report import generate_report
 
 load_dotenv()
 
-sys.path.append(str(Path(__file__).parent.parent / "week-05"))
-from groq_provider import GroqProvider
-from anthropic_provider import AnthropicProvider
-from openai_provider import OpenAIProvider
-from ollama_provider import OllamaProvider
-from provider import LLMProvider
+from llm_compare.providers.groq_provider import GroqProvider
+from llm_compare.providers.anthropic_provider import AnthropicProvider
+from llm_compare.providers.openai_provider import OpenAIProvider
+from llm_compare.providers.ollama_provider import OllamaProvider
+from llm_compare.providers.base import LLMProvider
 
 SYSTEM_PROMPT = """
 You are responsible to evaluate the user reviews. 
@@ -69,4 +65,5 @@ def run_batch_runner(cases: list[EvalCase]):
     generate_report(all_results)
 
 if __name__ == "__main__":
-    run_batch_runner(EVAL_DATASET)
+    dataset = load_eval_dataset()
+    run_batch_runner(dataset)
