@@ -68,7 +68,7 @@ def fetch_weather(city: str, client) -> dict | None:
 
 def test_faulty_fetch_weather():
     client = MagicMock()
-    client.get_forecast.side_effect = RuntimeError(f"Could not receive the forecast.")
+    client.get_forecast.side_effect = RuntimeError("Could not receive the forecast.")
 
     result = fetch_weather("New York City", client)
     print(result)

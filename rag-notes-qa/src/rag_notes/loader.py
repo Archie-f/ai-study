@@ -16,7 +16,7 @@ class DocumentMetadata:
 
 
 @dataclass
-class Document:
+class SourceDocument:
     """A single loaded source document with metadata and raw paragraphs plus style information."""
     metadata: DocumentMetadata
     paragraphs: list[tuple[str, str]]
@@ -47,7 +47,7 @@ def parse_week_day(filename: str) -> tuple[int | None, int | None]:
     result = _PATTERN.match(filename)
     return (int(result.group(1)), int(result.group(2))) if result else (None, None)
 
-def load_corpus(notes_root: Path) -> list[Document]:
+def load_corpus(notes_root: Path) -> list[SourceDocument]:
     """Walk notes_root and load every in-scope .docx into a Document.
 
     In scope: week-XX/week-XX-day-YY-takeaway-notes.docx and
@@ -61,7 +61,7 @@ def load_corpus(notes_root: Path) -> list[Document]:
         List of Document objects that are in the corpus.
     """
     comprehensive_notes: str = "AI-Study-Comprehensive-Notes.docx"
-    documents: list[Document] = []
+    documents: list[SourceDocument] = []
 
     for filename in notes_root.rglob("*.docx"):
         if "_reference" in filename.parts:
@@ -77,7 +77,7 @@ def load_corpus(notes_root: Path) -> list[Document]:
                 file_path=filename,
                 title=filename.stem,
             )
-            document = Document(
+            document = SourceDocument(
                 metadata=metadata,
                 paragraphs=iter_paragraphs(str(filename)),
             )
