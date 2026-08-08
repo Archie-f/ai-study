@@ -1,14 +1,7 @@
-from dataclasses import dataclass
+from rag_notes.models import SourceDocument, Chunk
 
-from rag_notes.loader import DocumentMetadata, SourceDocument
 
-@dataclass
-class Chunk:
-    """A single structure-aware chunk with enough metadata to cite its source."""
-    text: str
-    source: DocumentMetadata
-    heading: str | None
-    chunk_index: int
+BOUNDARY_STYLES = {"Heading 1", "Heading 2", "Heading 3"}
 
 def chunk_document(document: SourceDocument, boundary_styles: set[str]) -> list[Chunk]:
     """Split one Document into structure-aware chunks along its own heading boundaries.

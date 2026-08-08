@@ -1,25 +1,12 @@
 import re
-from dataclasses import dataclass
 from pathlib import Path
 from docx import Document as DocxFile
 
+from rag_notes.models import DocumentMetadata, SourceDocument
+
 
 _PATTERN = re.compile(r"week-(\d+)-day-(\d+)-takeaway-notes\.docx")
-
-@dataclass
-class DocumentMetadata:
-    """Source information for one loaded document."""
-    week: int | None
-    day: int | None
-    file_path: Path
-    title: str
-
-
-@dataclass
-class SourceDocument:
-    """A single loaded source document with metadata and raw paragraphs plus style information."""
-    metadata: DocumentMetadata
-    paragraphs: list[tuple[str, str]]
+KNOWN_UNSUPPORTED = {".doc", ".pdf"}
 
 
 def iter_paragraphs(path: str) -> list[tuple[str, str]]:
@@ -47,28 +34,46 @@ def parse_week_day(filename: str) -> tuple[int | None, int | None]:
     result = _PATTERN.match(filename)
     return (int(result.group(1)), int(result.group(2))) if result else (None, None)
 
+PARSERS = {
+    ".docx": iter_paragraphs,
+}
+
 def load_corpus(notes_root: Path) -> list[SourceDocument]:
-    """Walk notes_root and load every in-scope .docx into a Document.
+    """Walk notes_root and load every in-scope, parseable file into a SourceDocument.
 
     In scope: week-XX/week-XX-day-YY-takeaway-notes.docx and
-    AI-Study-Comprehensive-Notes.docx. Out of scope (skipped): everything
-    under _reference/, including study-plan docs.
+    AI-Study-Comprehensive-Notes.docx; _reference/ is excluded.
+
+    Parseable formats are driven by PARSERS (suffix -> parser function),
+    so adding a new format is a one-line addition, not a rewrite.
+    KNOWN_UNSUPPORTED formats (.doc, .pdf) print a warning instead of
+    being silently dropped; anything else is skipped without comment.
 
     Args:
         notes_root (Path): The root directory of the corpus.
 
     Returns:
-        List of Document objects that are in the corpus.
+        List of SourceDocument objects that are in the corpus.
     """
     comprehensive_notes: str = "AI-Study-Comprehensive-Notes.docx"
     documents: list[SourceDocument] = []
 
-    for filename in notes_root.rglob("*.docx"):
+    for filename in notes_root.rglob("*"):
+        file_name = filename.name
+        file_suffix = filename.suffix
+        is_comprehensive_notes = file_name == comprehensive_notes
+
         if "_reference" in filename.parts:
             continue
 
-        file_name = filename.name
-        is_comprehensive_notes = file_name == comprehensive_notes
+        if file_suffix in PARSERS:
+            parser = PARSERS.get(file_suffix)
+        elif file_suffix in KNOWN_UNSUPPORTED:
+            print(f"Skipping unsupported file {filename}")
+            continue
+        else:
+            continue
+
         if is_comprehensive_notes or _PATTERN.match(file_name):
             week_day_data = parse_week_day(file_name)
             metadata = DocumentMetadata(
@@ -79,7 +84,7 @@ def load_corpus(notes_root: Path) -> list[SourceDocument]:
             )
             document = SourceDocument(
                 metadata=metadata,
-                paragraphs=iter_paragraphs(str(filename)),
+                paragraphs=parser(str(filename)),
             )
             documents.append(document)
 
