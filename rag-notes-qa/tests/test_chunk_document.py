@@ -71,3 +71,69 @@ def test_text_before_first_heading():
     assert len(result) == 2
     assert result[1].heading == "1.1 What Is a Chunk"
     assert result[1].text == "A chunk is a piece of text.\n"
+
+def test_trailing_heading_with_no_body_is_dropped():
+    document = SourceDocument(
+        metadata=DocumentMetadata(week=9, day=5, file_path=Path("fake4.docx"), title="fake4"),
+        paragraphs=[
+            ("Intro paragraph.", "Normal"),
+            ("1.1 Section One", "Heading 3"),
+            ("Body under section one.", "Normal"),
+            ("1.2 Trailing Empty Section", "Heading 3"),
+        ]
+    )
+
+    result = chunk_document(document, boundary_styles)
+    all_headings = []
+
+    for chunk in result:
+        all_headings.append(chunk.heading)
+
+    assert len(result) == 2
+    assert result[-1].heading == "1.1 Section One"
+    assert "1.2 Trailing Empty Section" not in all_headings
+
+def test_empty_document_returns_no_chunks():
+    document = SourceDocument(
+        metadata=DocumentMetadata(week=9, day=5, file_path=Path("fake5.docx"), title="fake5"),
+        paragraphs=[]
+    )
+
+    result = chunk_document(document, boundary_styles)
+
+    assert result == []
+
+def test_document_with_no_headings_becomes_single_chunk():
+    document = SourceDocument(
+        metadata=DocumentMetadata(week=9, day=5, file_path=Path("fake6.docx"), title="fake6"),
+        paragraphs=[
+            ("First paragraph.", "Normal"),
+            ("Second paragraph.", "Normal"),
+            ("Third paragraph.", "Normal"),
+        ]
+    )
+
+    result = chunk_document(document, boundary_styles)
+
+    assert len(result) == 1
+    assert result[0].heading is None
+    assert result[0].text == "First paragraph.\nSecond paragraph.\nThird paragraph.\n"
+
+def test_chunk_index_is_sequential_across_multiple_chunks():
+    document = SourceDocument(
+        metadata=DocumentMetadata(week=9, day=5, file_path=Path("fake7.docx"), title="fake7"),
+        paragraphs=[
+            ("Intro.", "Normal"),
+            ("1.1 First", "Heading 3"),
+            ("Body one.", "Normal"),
+            ("1.2 Second", "Heading 3"),
+            ("Body two.", "Normal"),
+            ("1.3 Third", "Heading 3"),
+            ("Body three.", "Normal"),
+        ]
+    )
+
+    result = chunk_document(document, boundary_styles)
+
+    assert [chunk.chunk_index for chunk in result] == [0, 1, 2, 3]
+    assert [chunk.heading for chunk in result] == [None, "1.1 First", "1.2 Second", "1.3 Third"]

@@ -1,6 +1,9 @@
+from pathlib import Path
+
 import pytest
 
-from rag_notes.fixed_chunker import chunk_fixed_size, encoding
+from rag_notes.fixed_chunker import chunk_fixed_size, chunk_fixed_size_document, encoding
+from rag_notes.models import DocumentMetadata
 
 
 def test_normal_multiple_chunks_with_overlap():
@@ -67,3 +70,54 @@ def test_overlap_greater_or_equal_chunk_size_raises():
         chunk_fixed_size("irrelevant text here", n=5, o=5)   # o == n
     with pytest.raises(ValueError):
         chunk_fixed_size("irrelevant text here", n=5, o=6)   # o > n
+
+
+def test_document_chunks_have_sequential_index_and_matching_text():
+    """chunk_fixed_size_document assigns chunk_index 0, 1, 2, ... in the order chunk_texts was given."""
+    metadata = DocumentMetadata(week=9, day=5, file_path=Path("fake.docx"), title="fake")
+    chunk_texts = ["first chunk", "second chunk", "third chunk"]
+
+    result = chunk_fixed_size_document(chunk_texts, metadata)
+
+    assert [chunk.chunk_index for chunk in result] == [0, 1, 2]
+    assert [chunk.text for chunk in result] == chunk_texts
+
+
+def test_document_heading_defaults_to_none():
+    """heading is not passed in -> every Chunk's heading is None, since standalone fixed-size
+    chunking has no structural heading information of its own to attach."""
+    metadata = DocumentMetadata(week=9, day=5, file_path=Path("fake.docx"), title="fake")
+    chunk_texts = ["only chunk"]
+
+    result = chunk_fixed_size_document(chunk_texts, metadata)
+
+    assert result[0].heading is None
+
+
+def test_document_heading_is_passed_through_when_given():
+    """heading is passed in explicitly -> every resulting Chunk carries that same heading."""
+    metadata = DocumentMetadata(week=9, day=5, file_path=Path("fake.docx"), title="fake")
+    chunk_texts = ["chunk one", "chunk two"]
+
+    result = chunk_fixed_size_document(chunk_texts, metadata, heading="1.1 Some Section")
+
+    assert all(chunk.heading == "1.1 Some Section" for chunk in result)
+
+
+def test_document_source_metadata_is_carried_through_unchanged():
+    """Every Chunk's source is the exact same metadata object that was passed in."""
+    metadata = DocumentMetadata(week=9, day=5, file_path=Path("fake.docx"), title="fake")
+    chunk_texts = ["a chunk"]
+
+    result = chunk_fixed_size_document(chunk_texts, metadata)
+
+    assert result[0].source is metadata
+
+
+def test_document_empty_chunk_texts_returns_empty_list():
+    """No chunk texts given -> no Chunks produced."""
+    metadata = DocumentMetadata(week=9, day=5, file_path=Path("fake.docx"), title="fake")
+
+    result = chunk_fixed_size_document([], metadata)
+
+    assert result == []
