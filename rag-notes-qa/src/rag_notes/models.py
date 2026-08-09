@@ -1,0 +1,27 @@
+from dataclasses import dataclass
+from pathlib import Path
+
+
+@dataclass
+class DocumentMetadata:
+    """Source information for one loaded document."""
+    week: int | None
+    day: int | None
+    file_path: Path
+    title: str
+
+
+@dataclass
+class SourceDocument:
+    """A single loaded source document with metadata and raw paragraphs plus style information."""
+    metadata: DocumentMetadata
+    paragraphs: list[tuple[str, str]]
+
+
+@dataclass
+class Chunk:
+    """A single chunk with enough metadata to cite its source, produced by either chunker."""
+    text: str
+    source: DocumentMetadata
+    heading: str | None
+    chunk_index: int

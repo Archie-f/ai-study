@@ -1,0 +1,13 @@
+pyproject.toml
+src/rag_notes/__init__.py
+src/rag_notes/fixed_chunker.py
+src/rag_notes/loader.py
+src/rag_notes/models.py
+src/rag_notes/structure_chunker.py
+src/rag_notes_qa.egg-info/PKG-INFO
+src/rag_notes_qa.egg-info/SOURCES.txt
+src/rag_notes_qa.egg-info/dependency_links.txt
+src/rag_notes_qa.egg-info/requires.txt
+src/rag_notes_qa.egg-info/top_level.txt
+tests/test_chunk_document.py
+tests/test_fixed_chunker.py

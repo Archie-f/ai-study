@@ -1,0 +1,93 @@
+[
+  {
+    "id": "q001",
+    "question": "Why do type hints matter in Python even though the language doesn't enforce them at runtime?",
+    "source_document": "week-01-day-01-takeaway-notes",
+    "expected_answer_text": "Python is dynamically typed — you can assign any value to any variable and Python will not complain. Type hints let you annotate your code with type information so that tools (PyCharm, mypy) and other developers know what to expect.",
+    "notes": ""
+  },
+  {
+    "id": "q002",
+    "question": "What's the relationship between dataclasses and the JSON that Ollama expects?",
+    "source_document": "week-01-day-01-takeaway-notes",
+    "expected_answer_text": "Dataclasses are your internal world. Ollama speaks JSON (plain dicts). build_messages() is the bridge between them.",
+    "notes": ""
+  },
+  {
+    "id": "q003",
+    "question": "What does the if __name__ == \"__main__\": pattern actually control?",
+    "source_document": "week-01-day-01-takeaway-notes",
+    "expected_answer_text": "This is one of the most important Python patterns. It controls what runs automatically when a file is executed directly vs when it is imported by another file.",
+    "notes": ""
+  },
+  {
+    "id": "q004",
+    "question": "What's scheduled right after Day 01 in Week 01?",
+    "source_document": "week-01-day-01-takeaway-notes",
+    "expected_answer_text": "Next up: Day 02 — Virtual Environments & Packaging. pyproject.toml, src/ layout, pip install -e .",
+    "notes": "logistics/meta sentence, not a concept explanation -- sits at the very end of the document, good boundary-case test"
+  },
+  {
+    "id": "q005",
+    "question": "Why does an AI Engineer role fit someone coming from a software engineering background, according to the career analysis?",
+    "source_document": "AI-Study-Comprehensive-Notes",
+    "expected_answer_text": "AI Engineer is the most code-heavy, product-oriented AI role — the closest to what you already do.",
+    "notes": "SECTION 1, under a bold-Normal styled sub-heading, not a real Word heading style"
+  },
+  {
+    "id": "q006",
+    "question": "How is the AI Engineer role defined, compared to a Data Engineer, in the role breakdown?",
+    "source_document": "AI-Study-Comprehensive-Notes",
+    "expected_answer_text": "AI Engineer: Connects AI models (LLMs, APIs) to real products and systems. Builds the tools, pipelines, and integrations that make AI useful. Closest to traditional software engineering.",
+    "notes": ""
+  },
+  {
+    "id": "q007",
+    "question": "Why does an Ollama install via Homebrew sometimes fail to be found on Apple Silicon?",
+    "source_document": "AI-Study-Comprehensive-Notes",
+    "expected_answer_text": "Homebrew on Apple Silicon installs to /opt/homebrew/ — not the default PATH. You hit this issue when ollama was not found after installation.",
+    "notes": "SECTION 7, far from SECTION 1 -- spread test across the messiest document"
+  },
+  {
+    "id": "q008",
+    "question": "What's the trim-guard condition in chunk_fixed_size(), and why does it exist?",
+    "source_document": "AI-Study-Comprehensive-Notes",
+    "expected_answer_text": "uses a trim-guard (drop the trailing chunk when its remainder is <= o tokens, proven mathematically equivalent to \"is the last chunk fully contained in the previous chunk\" across roughly 9800 combinations with 0 mismatches) to avoid emitting a near-duplicate final chunk",
+    "notes": "mid-sentence substring inside a long bullet, not the whole bullet -- tests partial-match retrieval"
+  },
+  {
+    "id": "q009",
+    "question": "According to the WHERE I LEFT OFF box, what's the very next task after Week 09 Day 03?",
+    "source_document": "AI-Study-Comprehensive-Notes",
+    "expected_answer_text": "Golden Q&A Dataset: design the (question → expected source chunk) schema, then hand-label an initial set of real questions against your own notes.",
+    "notes": "near-duplicate wording also exists in week-09-day-04-takeaway-notes.docx -- good cross-document ambiguity test"
+  },
+  {
+    "id": "q010",
+    "question": "Why can splitting a document into non-overlapping fixed windows hurt retrieval later?",
+    "source_document": "week-09-day-03-takeaway-notes",
+    "expected_answer_text": "Splitting a token list into fixed windows with no overlap can cut an important sentence exactly in half across a chunk boundary -- neither resulting chunk contains the whole sentence, which hurts retrieval later (each chunk gets embedded separately).",
+    "notes": ""
+  },
+  {
+    "id": "q011",
+    "question": "What's the formula for how far a chunk's start position advances each step, given n and o?",
+    "source_document": "week-09-day-03-takeaway-notes",
+    "expected_answer_text": "Each chunk's start must be n - o tokens after the previous chunk's start -- you advance n tokens per chunk, then pull back o tokens for the overlap, netting n - o forward progress each time.",
+    "notes": ""
+  },
+  {
+    "id": "q012",
+    "question": "When chunk_fixed_size() is used as a fallback sub-splitter, what open design question does it raise about chunk_index?",
+    "source_document": "week-09-day-03-takeaway-notes",
+    "expected_answer_text": "How do you distinguish sub-chunk 1 of chunk 4 from sub-chunk 2 of chunk 4 in chunk_index?",
+    "notes": "a question embedded inside a body paragraph, not a heading or bullet"
+  },
+  {
+    "id": "q013",
+    "question": "Why does real LLM token count matter more than whitespace word count when deciding chunk size limits?",
+    "source_document": "week-09-day-03-takeaway-notes",
+    "expected_answer_text": "word count and token count diverge, sometimes significantly, and chunk-size limits in real systems are almost always expressed in tokens because that's what the embedding/LLM context window actually measures",
+    "notes": ""
+  }
+]
