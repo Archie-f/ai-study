@@ -25,3 +25,10 @@ class Chunk:
     source: DocumentMetadata
     heading: str | None
     chunk_index: int
+
+
+@dataclass
+class EmbeddedChunk:
+    """A Chunk paired with the embedding vector produced from its text."""
+    chunk: Chunk
+    vector: list[float]
