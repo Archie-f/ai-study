@@ -10,3 +10,4 @@ matplotlib
 tiktoken
 sentence-transformers
 numpy
+chromadb
