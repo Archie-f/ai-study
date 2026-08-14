@@ -80,7 +80,7 @@ def score_document(query_terms: list[str], doc_index: int, index: BM25Index) -> 
     return score
 
 
-def search(query: str, index: BM25Index, n_results: int = 3) -> list[tuple[float, Chunk]]:
+def bm25_search(query: str, index: BM25Index, n_results: int = 3) -> list[tuple[float, Chunk]]:
     """Score a query against every document in the index and return
     the top matches.
 

@@ -2,8 +2,9 @@ from pathlib import Path
 
 import numpy as np
 
-from rag_notes.bm25_index import build_bm25_index, search
+from rag_notes.bm25_index import build_bm25_index, bm25_search
 from rag_notes.embedder import load_embedding_model, embed_chunks, cosine_similarity
+from rag_notes.hybrid_search import build_rank_map, rrf_merge
 from rag_notes.loader import load_corpus
 from rag_notes.structure_chunker import chunk_document, BOUNDARY_STYLES
 from rag_notes.vector_store import get_collection, add_chunks
@@ -78,8 +79,29 @@ print()
 
 ## sparse retrieval
 bm25_index = build_bm25_index(chunks)
-scored_results = search(query, bm25_index, n_results=3)
+scored_results = bm25_search(query, bm25_index, n_results=3)
 
 print("--- Sparse retrieval - BM25 search")
 for score, chunk in scored_results:
     print(f"{score:.3f}  {chunk.heading}")
+    print()
+
+dense_ids = results["ids"][0]
+sparse_ids = [f"{chunk.source.title}-{chunk.chunk_index}" for _, chunk in scored_results]
+
+rank_maps = [build_rank_map(dense_ids), build_rank_map(sparse_ids)]
+print(rank_maps)
+merged = rrf_merge(rank_maps)
+print(merged)
+
+merged_res = merged[:3]
+print(merged_res)
+print()
+
+id_to_chunk = {f"{c.source.title}-{c.chunk_index}": c for c in bm25_index.chunks}
+
+search_result = [
+    (chunk_id, score, id_to_chunk[chunk_id])
+    for chunk_id, score in merged_res
+]
+print(search_result)
