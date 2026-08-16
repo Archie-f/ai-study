@@ -1,5 +1,9 @@
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
+
+from chromadb import Collection
+from sentence_transformers import SentenceTransformer
 
 
 @dataclass
@@ -25,3 +29,29 @@ class Chunk:
     source: DocumentMetadata
     heading: str | None
     chunk_index: int
+
+
+@dataclass
+class EmbeddedChunk:
+    """A Chunk paired with the embedding vector produced from its text."""
+    chunk: Chunk
+    vector: list[float]
+
+
+@dataclass
+class BM25Index:
+    """Everything needed to score a query against a corpus of Chunks."""
+    chunks: list[Chunk]
+    tokenized_docs: list[list[str]]
+    doc_freq: Counter
+    avgdl: float
+    k1: float = 1.2
+    b: float = 0.75
+
+
+@dataclass
+class RetrievalIndex:
+    """Everything needed to run a hybrid search against one notes corpus."""
+    collection: Collection
+    model: SentenceTransformer
+    bm25_index: BM25Index

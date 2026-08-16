@@ -3,6 +3,7 @@ from rag_notes.models import SourceDocument, Chunk
 
 BOUNDARY_STYLES = {"Heading 1", "Heading 2", "Heading 3"}
 
+
 def chunk_document(document: SourceDocument, boundary_styles: set[str]) -> list[Chunk]:
     """Split one Document into structure-aware chunks along its own heading boundaries.
         Args:

@@ -21,6 +21,7 @@ def iter_paragraphs(path: str) -> list[tuple[str, str]]:
 
     return paragraphs
 
+
 def parse_week_day(filename: str) -> tuple[int | None, int | None]:
     """Extract (week, day) from a takeaway-notes filename.
 
@@ -33,6 +34,7 @@ def parse_week_day(filename: str) -> tuple[int | None, int | None]:
     """
     result = _PATTERN.match(filename)
     return (int(result.group(1)), int(result.group(2))) if result else (None, None)
+
 
 PARSERS = {
     ".docx": iter_paragraphs,

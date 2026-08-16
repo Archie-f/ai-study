@@ -8,6 +8,7 @@ DEFAULT_OVERLAP = 50
 
 encoding = tiktoken.get_encoding("cl100k_base")
 
+
 def chunk_fixed_size(text: str, n: int, o: int) -> list[str]:
     """Split text into fixed-size, overlapping chunk texts by token count."""
     if o >= n:
@@ -24,6 +25,7 @@ def chunk_fixed_size(text: str, n: int, o: int) -> list[str]:
         chunk_texts.append(encoding.decode(chunk_tokens))
 
     return chunk_texts
+
 
 def chunk_fixed_size_document(chunk_texts: list[str], metadata: DocumentMetadata, heading: str | None = None) -> list[Chunk]:
     """Creates Chunk using each element of list.
