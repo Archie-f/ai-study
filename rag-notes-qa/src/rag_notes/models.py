@@ -2,6 +2,9 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
+from chromadb import Collection
+from sentence_transformers import SentenceTransformer
+
 
 @dataclass
 class DocumentMetadata:
@@ -44,3 +47,11 @@ class BM25Index:
     avgdl: float
     k1: float = 1.2
     b: float = 0.75
+
+
+@dataclass
+class RetrievalIndex:
+    """Everything needed to run a hybrid search against one notes corpus."""
+    collection: Collection
+    model: SentenceTransformer
+    bm25_index: BM25Index

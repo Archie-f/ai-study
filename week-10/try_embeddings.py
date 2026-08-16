@@ -7,7 +7,7 @@ from rag_notes.embedder import load_embedding_model, embed_chunks, cosine_simila
 from rag_notes.hybrid_search import build_rank_map, rrf_merge
 from rag_notes.loader import load_corpus
 from rag_notes.structure_chunker import chunk_document, BOUNDARY_STYLES
-from rag_notes.vector_store import get_collection, add_chunks
+from rag_notes.vector_store import get_collection, add_chunks, get_query_result
 
 text = "Python type hints are optional at runtime."
 sentences = [
@@ -65,16 +65,14 @@ print(f"Max similar: {max_similar}")
 print()
 
 ### approximate nearest-neighbor search
-results = collection.query(
-    query_embeddings=[query_vector.tolist()],
-    n_results=3,
-    include=["metadatas", "documents", "distances"],
-)
+results = get_query_result(collection, query, model)
+
 print("--- Dense retrieval - approximate nearest-neighbor search")
 for chunk_id, distance, metadata in zip(
     results["ids"][0], results["distances"][0], results["metadatas"][0]
 ):
     print(f"{distance:.3f}  {metadata['heading']}  ({chunk_id})")
+
 print()
 
 ## sparse retrieval
@@ -84,7 +82,8 @@ scored_results = bm25_search(query, bm25_index, n_results=3)
 print("--- Sparse retrieval - BM25 search")
 for score, chunk in scored_results:
     print(f"{score:.3f}  {chunk.heading}")
-    print()
+
+print()
 
 dense_ids = results["ids"][0]
 sparse_ids = [f"{chunk.source.title}-{chunk.chunk_index}" for _, chunk in scored_results]

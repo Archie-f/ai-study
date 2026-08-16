@@ -1,5 +1,6 @@
 import chromadb
 from chromadb import Collection, QueryResult
+from chromadb.errors import NotFoundError
 from sentence_transformers import SentenceTransformer
 
 from rag_notes.models import EmbeddedChunk
@@ -21,6 +22,20 @@ def get_collection(persist_path: str, name: str = COLLECTION_NAME) -> Collection
         name=name,
         configuration={"hnsw": {"space": "cosine"}},
     )
+
+
+def delete_collection(persist_path, name=COLLECTION_NAME):
+    """Delete a collection from the disk.
+    Args:
+        persist_path: folder to store the Chroma database in
+        name: collection name
+    """
+    client = chromadb.PersistentClient(path=persist_path)
+    try:
+        client.delete_collection(name=name)
+        print(f"Collection '{name}' deleted")
+    except NotFoundError:
+        print(f"Collection '{name}' does not exist yet, nothing to delete")
 
 
 def build_metadata(chunk) -> dict:

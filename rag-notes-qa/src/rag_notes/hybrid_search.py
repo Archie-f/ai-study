@@ -40,7 +40,7 @@ def rrf_merge(rank_maps: list[dict[str, int]], k: int = 60) -> list[tuple[str, f
     return scored
 
 
-def search(
+def hybrid_search(
         query: str,
         collection,
         model,
