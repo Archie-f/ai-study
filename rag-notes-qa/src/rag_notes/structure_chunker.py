@@ -19,20 +19,15 @@ def chunk_document(document: SourceDocument, boundary_styles: set[str]) -> list[
 
     for paragraph in document.paragraphs:
         if paragraph[1] in boundary_styles:
-            if current_heading is None and not current_text:
-                current_heading = paragraph[0]
-
-            if paragraph[0] != current_heading:
-                if current_text != "":
-                    chunks.append(Chunk(
-                        text=current_text,
-                        source=document.metadata,
-                        heading=current_heading,
-                        chunk_index=current_chunk_index
-                    ))
-                    current_text = ""
-                    current_chunk_index += 1
-
+            if current_text != "":
+                chunks.append(Chunk(
+                    text=current_text,
+                    source=document.metadata,
+                    heading=current_heading,
+                    chunk_index=current_chunk_index
+                ))
+                current_text = ""
+                current_chunk_index += 1
             current_heading = paragraph[0]
         else:
             current_text += paragraph[0] + "\n"
