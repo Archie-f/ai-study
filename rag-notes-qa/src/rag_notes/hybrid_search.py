@@ -23,7 +23,7 @@ def rrf_merge(rank_maps: list[dict[str, int]], k: int = 60) -> list[tuple[str, f
     Returns:
         list of (chunk_id, rrf_score) tuples, highest score first
     """
-    all_ids = set()
+    all_ids: set[str] = set()
     for rank_map in rank_maps:
         all_ids.update(rank_map.keys())
 

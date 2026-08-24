@@ -29,6 +29,8 @@ def build_retrieval_index(notes_root: Path, persist_path: str) -> RetrievalIndex
     embedded_chunks = embed_chunks(chunks, model)
     delete_collection(persist_path)
     collection = get_collection(persist_path)
+    if collection:
+        print(f"Collection '{collection.name}' rebuilt.")
     add_chunks(collection, embedded_chunks)
 
     bm25_index = build_bm25_index(chunks)

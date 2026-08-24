@@ -25,7 +25,7 @@ def build_doc_frequencies(tokenized_docs: list[list[str]]) -> Counter:
     Returns:
         Counter mapping term -> number of documents containing it
     """
-    frequency = Counter()
+    frequency: Counter[str] = Counter()
     for tokenized_doc in tokenized_docs:
         frequency.update(set(tokenized_doc))
 

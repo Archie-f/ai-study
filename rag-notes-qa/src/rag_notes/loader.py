@@ -70,6 +70,7 @@ def load_corpus(notes_root: Path) -> list[SourceDocument]:
 
         if file_suffix in PARSERS:
             parser = PARSERS.get(file_suffix)
+            assert parser is not None
         elif file_suffix in KNOWN_UNSUPPORTED:
             print(f"Skipping unsupported file {filename}")
             continue

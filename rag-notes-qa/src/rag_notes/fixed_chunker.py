@@ -10,7 +10,14 @@ encoding = tiktoken.get_encoding("cl100k_base")
 
 
 def chunk_fixed_size(text: str, n: int, o: int) -> list[str]:
-    """Split text into fixed-size, overlapping chunk texts by token count."""
+    """Split text into fixed-size, overlapping chunk texts by token count.
+        Arguments:
+            text: text to split
+            n: number of tokens to split
+            o: overlapping token count
+        Returns:
+            list of chunk texts
+    """
     if o >= n:
         raise ValueError(f"Overlap value '{o}' can not be greater than chunk size value '{n}'")
 
@@ -27,7 +34,11 @@ def chunk_fixed_size(text: str, n: int, o: int) -> list[str]:
     return chunk_texts
 
 
-def chunk_fixed_size_document(chunk_texts: list[str], metadata: DocumentMetadata, heading: str | None = None) -> list[Chunk]:
+def chunk_fixed_size_document(
+        chunk_texts: list[str],
+        metadata: DocumentMetadata,
+        heading: str | None = None
+) -> list[Chunk]:
     """Creates Chunk using each element of list.
 
         Arguments:
@@ -37,15 +48,9 @@ def chunk_fixed_size_document(chunk_texts: list[str], metadata: DocumentMetadata
         Returns:
             list of Chunk
     """
-    chunks: list[Chunk] = []
-
-    for index, text in enumerate(chunk_texts):
-        chunk = Chunk(
-            text=text,
-            source=metadata,
-            heading=heading,
-            chunk_index=index,
-        )
-        chunks.append(chunk)
-
-    return chunks
+    return [Chunk(
+        text=chunk_text,
+        source=metadata,
+        heading=heading,
+        chunk_index=index,
+    ) for index, chunk_text in enumerate(chunk_texts)]
