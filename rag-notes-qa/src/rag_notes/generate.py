@@ -1,3 +1,4 @@
+from rag_notes.citations import build_source_label
 from rag_notes.models import Chunk
 from llm_compare.providers.base import LLMProvider, LLMResult
 
@@ -40,11 +41,7 @@ def build_context(results: list[tuple[str, float, Chunk]]) -> str:
     context = []
     for index, (_, _, chunk) in enumerate(results, start=1):
         metadata = chunk.source
-        if metadata.week is None or metadata.day is None:
-            label = metadata.title
-        else:
-            label = f"week-{metadata.week:02d}-day-{metadata.day:02d}"
-
+        label = build_source_label(metadata)
         context.append(f"[Source {index:02d}: {label}]\n{chunk.text}")
 
     return "\n\n".join(context)
@@ -65,5 +62,5 @@ def generate_answer(question: str, context: str, provider: LLMProvider) -> LLMRe
     Returns:
         The provider's LLMResult (text, cost, tokens, latency).
     """
-    user_prompt = f"{context.strip()}\n\nQuestion:{question.strip()}"
+    user_prompt = f"{context.strip()}\n\nQuestion: {question.strip()}"
     return provider.ask(user_input=user_prompt, system_prompt=SYSTEM_PROMPT)

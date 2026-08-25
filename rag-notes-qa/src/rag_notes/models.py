@@ -55,3 +55,23 @@ class RetrievalIndex:
     collection: Collection
     model: SentenceTransformer
     bm25_index: BM25Index
+
+
+@dataclass
+class Citation:
+    """One source an answer was built from — self-contained enough to
+    trace back from an answer's [Source N] reference and verify without
+    re-running retrieval."""
+    source_index: int
+    label: str
+    heading: str | None
+    text: str
+
+
+@dataclass
+class AnsweredQuery:
+    """A question, the answer generated for it, and the citations that
+    backed that answer."""
+    query: str
+    answer: str
+    citations: list[Citation]
