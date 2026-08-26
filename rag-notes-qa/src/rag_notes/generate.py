@@ -1,12 +1,17 @@
-from rag_notes.citations import build_source_label
-from rag_notes.models import Chunk
+from rag_notes import retrieval
+from rag_notes.citations import build_source_label, build_citations, format_citations
+from rag_notes.models import Chunk, RetrievalIndex, AnsweredQuery
 from llm_compare.providers.base import LLMProvider, LLMResult
 
+
+NO_ANSWER_TOKEN = "NO_ANSWER_FOUND"
+GUARDRAIL_ANSWER = "I don't know"
 
 SYSTEM_PROMPT = (
     "You answer questions using ONLY the provided context. "
     "If the context does not contain enough information to answer, "
-    "reply only as 'I don't know' instead of guessing or using outside knowledge. "
+    f"reply with exactly the token {NO_ANSWER_TOKEN} and nothing else "
+    "instead of guessing or using outside knowledge. "
     "When you use a source, refer to it by its [Source N: <label>] label."
 )
 
@@ -64,3 +69,55 @@ def generate_answer(question: str, context: str, provider: LLMProvider) -> LLMRe
     """
     user_prompt = f"{context.strip()}\n\nQuestion: {question.strip()}"
     return provider.ask(user_input=user_prompt, system_prompt=SYSTEM_PROMPT)
+
+
+def normalize_answer(text: str) -> str:
+    return GUARDRAIL_ANSWER if NO_ANSWER_TOKEN in text else text
+
+
+def answer_question(index: RetrievalIndex, question: str, provider: LLMProvider, n: int = 5) -> AnsweredQuery:
+    """Run the full pipeline — retrieval, generation, citations — for one question.
+
+    Args:
+        index: A RetrievalIndex from build_retrieval_index().
+        question: The question to answer.
+        provider: An LLMProvider instance to generate the answer with.
+        n: How many search() results to retrieve and cite.
+
+    Returns:
+        An AnsweredQuery bundling the question, the generated answer,
+        and the citations backing it.
+    """
+    results = retrieval.search(index, question, n=n)
+    context = build_context(results)
+    result = generate_answer(question, context, provider)
+    answer = normalize_answer(result.text)
+    citations = build_citations(results)
+    return AnsweredQuery(
+        query=question,
+        answer=answer,
+        citations=citations,
+    )
+
+
+def display_answer(answered: AnsweredQuery) -> str:
+    """Format an AnsweredQuery as one printable, human-readable block.
+
+    Combines the question, the answer, and format_citations()'s output
+    into a single display-ready string — keeps AnsweredQuery itself
+    free of any formatting concerns, same separation as format_citations().
+
+    Args:
+        answered: The AnsweredQuery to display.
+
+    Returns:
+        A multi-line block: the question, the answer, then the
+        formatted citations — labeled so a reader can tell them apart
+        even when the answer is the GUARDRAIL_ANSWER guardrail phrase.
+    """
+    context_heading = "Sources:"
+    if GUARDRAIL_ANSWER == answered.answer:
+        context_heading = "No related answer found! Retrieved context:"
+    citations = format_citations(answered.citations)
+
+    return f"Question: {answered.query}\nAnswer: {answered.answer}\n{context_heading}\n{citations}"

@@ -10,9 +10,24 @@ from .base import LLMProvider, LLMResult, Provider
 class OllamaProvider(LLMProvider):
     """A locally-running Ollama model, called over its REST API."""
 
-    def __init__(self, model: str = "llama3"):
+    def __init__(self, model: str = "llama3", temperature: float | None = None):
         """Store model name."""
         self.model = model
+        self.temperature = temperature
+
+    def _payload(self, user_input: str, system_prompt: str, stream: bool) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_input},
+            ],
+            "stream": stream,
+        }
+        if self.temperature is not None:
+            payload["options"] = {"temperature": self.temperature}
+        return payload
+
 
     def ask(self, user_input: str, system_prompt: str = '') -> LLMResult:
         """Call to a local Ollama model and return unified LLMResult.
@@ -28,20 +43,7 @@ class OllamaProvider(LLMProvider):
             start_time: float = time.perf_counter()
             response = requests.post(
                 f"{os.getenv('OLLAMA_BASE_URL')}/api/chat",
-                json={
-                    "model": self.model,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": system_prompt,
-                        },
-                        {
-                            "role": "user",
-                            "content": user_input,
-                        }
-                    ],
-                    "stream": False,
-                },
+                json=self._payload(user_input, system_prompt, stream=False),
                 timeout=120
             )
             elapsed_time: float = (time.perf_counter() - start_time) * 1000
@@ -80,20 +82,7 @@ class OllamaProvider(LLMProvider):
         try:
             response = requests.post(
                 f"{os.getenv('OLLAMA_BASE_URL')}/api/chat",
-                json={
-                    "model": self.model,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": system_prompt,
-                        },
-                        {
-                            "role": "user",
-                            "content": user_input,
-                        }
-                    ],
-                    "stream": True,
-                },
+                json=self._payload(user_input, system_prompt, stream=True),
                 timeout=120,
                 stream=True,
             )
