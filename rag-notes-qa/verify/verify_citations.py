@@ -14,7 +14,7 @@ notes_root_env = os.getenv("NOTES_ROOT")
 if notes_root_env is None:
     raise RuntimeError("NOTES_ROOT not set — check your .env file")
 NOTES_ROOT = Path(notes_root_env)
-PERSIST_PATH = str(Path(__file__).parent / "persistent")
+PERSIST_PATH = str(Path(__file__).parent.parent / "persistent")
 
 QUESTION = "Why do type hints matter in Python even though the language doesn't enforce them at runtime?"
 
