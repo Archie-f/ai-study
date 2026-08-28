@@ -76,6 +76,15 @@ def generate_answer(question: str, context: str, provider: LLMProvider) -> LLMRe
 
 
 def normalize_answer(text: str) -> str:
+    """Convert a raw model answer into the guardrail-safe answer if needed.
+
+    Args:
+        text: The raw text returned by generate_answer().
+
+    Returns:
+        GUARDRAIL_ANSWER if NO_ANSWER_TOKEN appears anywhere in text,
+        otherwise text unchanged.
+    """
     return GUARDRAIL_ANSWER if NO_ANSWER_TOKEN in text else text
 
 
