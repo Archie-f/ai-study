@@ -75,3 +75,11 @@ class AnsweredQuery:
     query: str
     answer: str
     citations: list[Citation]
+
+
+@dataclass
+class RetrievalEvalReport:
+    """Retrieval-quality metrics from one evaluation run, each averaged
+    across every question in the golden set."""
+    recall_k: dict[int, float]
+    mrr: float
