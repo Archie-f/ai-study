@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Literal
 
 from dotenv import load_dotenv
 
@@ -12,11 +13,13 @@ load_dotenv()
 NOTES_ROOT = Path(os.getenv("NOTES_ROOT"))
 PERSIST_PATH = str(Path(__file__).parent.parent / "persistent")
 GOLDEN_QA_PATH = Path(__file__).parent.parent / "data" / "golden_qa.json"
+mode_list = ["hybrid", "vector", "bm25"]
 
 def run_retrieval_eval(
     retrieval_index: RetrievalIndex,
     golden_qa_path: Path,
     k_values: list[int] | None = None,
+    mode: Literal["hybrid", "vector", "bm25"] = "hybrid"
 ) -> RetrievalEvalReport:
     """Run every golden_qa.json question through search() and score retrieval quality.
 
@@ -24,6 +27,7 @@ def run_retrieval_eval(
         retrieval_index: a built RetrievalIndex, as returned by build_retrieval_index()
         golden_qa_path: path to golden_qa.json
         k_values: which recall@k cutoffs to report
+        mode: "hybrid" (default), "vector", or "bm25" — forwarded to hybrid_search()
     Returns:
         a RetrievalEvalReport with recall@k for each k in k_values, plus MRR,
         each averaged across every question in the golden set
@@ -38,7 +42,7 @@ def run_retrieval_eval(
     recall_values: list[list[float]] = []
     ranks: list[float] = []
     for index, entry in enumerate(golden_qa, start=1):
-        results = search(retrieval_index, entry["question"], max(k_values))
+        results = search(retrieval_index, entry["question"], max(k_values), mode=mode)
         retrieved_ids = [result[2].source.title for result in results]
         relevant_id = {entry["source_document"]}
 
@@ -64,10 +68,35 @@ def run_retrieval_eval(
     )
 
 
+def compare_retrieval_modes(
+    retrieval_index: RetrievalIndex,
+    golden_qa_path: Path,
+    k_values: list[int] | None = None,
+    modes: list[Literal["hybrid", "vector", "bm25"]] | None = None,
+) -> dict[str, RetrievalEvalReport]:
+    """Run run_retrieval_eval() once per retrieval mode and collect the results.
+
+    Args:
+        retrieval_index: a built RetrievalIndex, as returned by build_retrieval_index()
+        golden_qa_path: path to golden_qa.json
+        k_values: which recall@k cutoffs to report
+        modes: which modes to compare (defaults to hybrid, vector, and bm25)
+    Returns:
+        a dict mapping each mode name to its RetrievalEvalReport
+    """
+    if modes is None:
+        modes = ["hybrid", "vector", "bm25"]
+    return {mode: run_retrieval_eval(retrieval_index, golden_qa_path, k_values, mode) for mode in modes}
+
+
 def main():
     index = build_retrieval_index(NOTES_ROOT, PERSIST_PATH)
     report = run_retrieval_eval(index, GOLDEN_QA_PATH)
     print(report)
+    print("-" * 20)
+    reports = compare_retrieval_modes(index, GOLDEN_QA_PATH, modes=mode_list)
+    print(reports)
+
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from rag_notes.bm25_index import build_bm25_index
 from rag_notes.embedder import load_embedding_model, embed_chunks
@@ -38,13 +39,19 @@ def build_retrieval_index(notes_root: Path, persist_path: str) -> RetrievalIndex
     return RetrievalIndex(collection=collection, model=model, bm25_index=bm25_index)
 
 
-def search(retrieval_index: RetrievalIndex, query: str, n: int = 3) -> list[tuple[str, float, Chunk]]:
+def search(
+        retrieval_index: RetrievalIndex,
+        query: str,
+        n: int = 3,
+        mode: Literal["hybrid", "vector", "bm25"] = "hybrid",
+) -> list[tuple[str, float, Chunk]]:
     """Run a hybrid search against an already-built RetrievalIndex.
 
     Args:
         retrieval_index: a RetrievalIndex from build_retrieval_index()
         query: raw query string
         n: how many merged results to return
+        mode: "hybrid" (default), "vector", or "bm25" — forwarded to hybrid_search()
     Returns:
         top n (chunk_id, rrf_score, chunk) tuples, highest combined score first
     """
@@ -54,4 +61,5 @@ def search(retrieval_index: RetrievalIndex, query: str, n: int = 3) -> list[tupl
         model=retrieval_index.model,
         bm25_index=retrieval_index.bm25_index,
         n=n,
+        mode=mode
     )
