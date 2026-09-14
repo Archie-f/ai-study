@@ -83,3 +83,11 @@ class RetrievalEvalReport:
     across every question in the golden set."""
     recall_k: dict[int, float]
     mrr: float
+
+
+@dataclass
+class JudgeResult:
+    """One LLM-judge faithfulness score for one generated answer."""
+    score: float | None
+    reason: str
+    passed: bool
