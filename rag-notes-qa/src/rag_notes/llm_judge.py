@@ -96,6 +96,8 @@ def judge_answer(
 
     normalized_score = normalize_score(score, scale=3)
     return JudgeResult(
+        question=question,
+        answer=answer,
         score=normalized_score,
         reason=reason,
         passed=is_passed,

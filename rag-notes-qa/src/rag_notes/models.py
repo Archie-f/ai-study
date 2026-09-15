@@ -88,6 +88,8 @@ class RetrievalEvalReport:
 @dataclass
 class JudgeResult:
     """One LLM-judge faithfulness score for one generated answer."""
+    question: str
+    answer: str
     score: float | None
     reason: str
     passed: bool
