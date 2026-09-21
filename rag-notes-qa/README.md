@@ -20,6 +20,10 @@ Week 12 finally brings the full pipeline together. I wrapped up prompt assembly,
 generation, structured citations, and a solid guardrail to block unsupported answers. 
 I built a CLI so you can finally ask questions against the entire corpus end-to-end.
 
+Week 13 adds evaluation: retrieval-quality metrics (recall@k, MRR), an LLM-as-judge
+faithfulness scorer, and a combined HTML report that ties both together with a
+filterable, per-question results table.
+
 ## Setup
 
 From inside `rag-notes-qa/`, using the shared `ai-study/.venv`:  
@@ -61,18 +65,27 @@ Copy `.env.example` to `.env` and set `NOTES_ROOT` to the path of the notes corp
   pipeline end-to-end (`answer_question`)
 - `src/rag_notes/citations.py` — turns search results into structured, numbered
   citations (`build_source_label`, `build_citations`, `format_citations`)
+- `src/rag_notes/retrieval_metrics.py` — pure retrieval-quality metrics
+  (`recall_at_k`, `reciprocal_rank`, `mean_reciprocal_rank`)
+- `src/rag_notes/llm_judge.py` — LLM-as-judge faithfulness scoring
+  (`build_judge_prompt`, `clean_result`, `normalize_score`, `judge_answer`)
+- `src/rag_notes/eval_report.py` — builds the self-contained HTML eval report
+  (`build_full_eval_html`, `save_full_eval_html`)
 - `ask.py` — CLI entry point: asks a question, prints the answer with its
   citations (`display_answer`)
 - `verify/` — manual, live end-to-end smoke tests against a real Ollama model and
   a real Chroma index (`verify_generate.py`, `verify_citations.py`,
-  `verify_retrieval.py`, `verify_guardrail.py`) — distinct from `tests/`, which is
+  `verify_retrieval.py`, `verify_guardrail.py`, `verify_retrieval_eval.py`,
+  `verify_llm_judge.py`, `verify_full_eval.py`) — distinct from `tests/`, which is
   fast and dependency-free
 - `data/golden_qa.json` — hand-labeled (question, source document, verbatim answer
   span) reference set, chunker-agnostic and retrieval-mode-agnostic by design
 - `tests/` — unit tests for both chunkers, the pure functions in `bm25_index.py`
   and `hybrid_search.py`, `citations.py` (`test_citations.py`), and
   `generate.py`'s context builder and guardrail logic (`test_generate.py`,
-  `test_guardrail.py`)
+  `test_guardrail.py`), plus `retrieval_metrics.py` (`test_retrieval_metrics.py`),
+  `llm_judge.py`'s pure pieces (`test_llm_judge.py`), and `eval_report.py`'s
+  `build_full_eval_html()` (`test_eval_report.py`)
 - `compare_chunkers.py` — runs both chunkers over one document and prints their
   output side by side
 - `main.py` — loads the full corpus and structure-chunks every document
@@ -107,3 +120,18 @@ tested — `tests/test_generate.py`, `tests/test_citations.py`, and
 additionally exercised live against a real model via
 `verify/verify_guardrail.py`, including an adversarial prompt-injection case.
 Tagged `v0.12.0`.
+
+Week 13 built out evaluation: `retrieval_metrics.py` (`recall_at_k`,
+`reciprocal_rank`, `mean_reciprocal_rank`), `llm_judge.py` (an LLM-as-judge
+faithfulness scorer via `judge_answer()`), and `eval_report.py`, which combines
+both into one self-contained HTML report with a filterable, per-question
+results table. `verify/verify_retrieval_eval.py`, `verify/verify_llm_judge.py`,
+and `verify/verify_full_eval.py` run the real pipeline against the corpus and a
+real judge model. On the testing side, `tests/test_retrieval_metrics.py`,
+`tests/test_llm_judge.py`, and `tests/test_eval_report.py` cover every pure
+function — `judge_answer()`, `run_retrieval_eval()`, `compare_retrieval_modes()`,
+`run_full_judge_eval()`, and `verify_full_eval.main()` are deliberately excluded
+from the fast unit test suite, the same live-call boundary Week 10 drew around
+`embed_chunks()` and `get_query_result()`, since they require a real Chroma
+index and a real LLM call to run.
+Tagged `v0.13.0`.
