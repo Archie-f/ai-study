@@ -59,6 +59,13 @@ Copy `.env.example` to `.env` and set `NOTES_ROOT` to the path of the notes corp
 - `src/rag_notes/retrieval.py` — the single entry point: `build_retrieval_index()`
   loads, chunks, embeds, and indexes the whole corpus; `search()` runs a hybrid
   query against the result
+- `src/rag_notes/protocols.py` — structural-typing interfaces for the three
+  pieces of the pipeline meant to be swappable: `Chunker`, `VectorStore`,
+  `Retriever`
+- `src/rag_notes/adapters.py` — concrete adapters implementing those protocols
+  (`StructureChunker`, `FixedSizeChunker`, `ChromaVectorStore`,
+  `HybridRetriever`), each a thin wrapper around an already-existing
+  function/module
 - `src/rag_notes/generate.py` — assembles retrieved chunks into a labeled context
   (`build_context`), calls the LLM provider (`generate_answer`), enforces the
   guardrail against unsupported answers (`normalize_answer`), and runs the full
@@ -89,6 +96,14 @@ Copy `.env.example` to `.env` and set `NOTES_ROOT` to the path of the notes corp
 - `compare_chunkers.py` — runs both chunkers over one document and prints their
   output side by side
 - `main.py` — loads the full corpus and structure-chunks every document
+
+**A known trade-off:** `protocols.py` imports `QueryResult` from `chromadb`
+and `SentenceTransformer` from `sentence-transformers` for `VectorStore`'s
+type hints. That means the "pure interface" file isn't fully independent of
+a specific implementation — swapping `ChromaVectorStore` for a different
+vector store later would mean touching the protocol's return type too.
+Noted here on purpose, not fixed, since a store-agnostic result type is out
+of scope for now.
 
 ## Running things
 ```bash
