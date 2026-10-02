@@ -43,6 +43,8 @@ python week-02/hello_llm.py
 | Week 10 | RAG: Retrieval — embeddings, vector store, BM25, hybrid search                         | Done   |
 | Week 11 | Consolidate #1 — rebuild from memory, Python fundamentals, framework reading            | Done   |
 | Week 12 | RAG: Generation — prompt assembly, citations, guardrails, CLI                           | Done   |
+| Week 13 | RAG: Evaluation — retrieval metrics (recall@k/MRR), LLM-as-judge, HTML report           | Done   |
+| Week 14 | Consolidate #2 — rebuild from memory, swappable-interface Protocols + adapters          | Done   |
 
 ## What I Learned
 ### Week 01

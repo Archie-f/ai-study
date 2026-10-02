@@ -137,3 +137,31 @@ def test_chunk_index_is_sequential_across_multiple_chunks():
 
     assert [chunk.chunk_index for chunk in result] == [0, 1, 2, 3]
     assert [chunk.heading for chunk in result] == [None, "1.1 First", "1.2 Second", "1.3 Third"]
+
+
+def test_repeated_heading_text_produces_separate_chunks():
+    """Two different sections sharing the exact same heading text must stay as two separate
+    chunks, not merge into one and not overwrite each other."""
+    document = SourceDocument(
+        metadata=DocumentMetadata(week=9, day=5, file_path=Path("fake7.docx"), title="fake7"),
+        paragraphs=[
+            ("Intro.", "Normal"),
+            ("First Subheading", "Heading 3"),
+            ("1.1 First", "Heading 3"),
+            ("First same heading's text.", "Normal"),
+            ("1.2 Second", "Heading 3"),
+            ("Body two.", "Normal"),
+            ("Second Subheading", "Heading 3"),
+            ("1.1 First", "Heading 3"),
+            ("Second same heading's text.", "Normal")
+        ]
+    )
+    result = chunk_document(document, boundary_styles)
+    heading_1 = result[1].heading
+    text_1 = result[1].text
+    heading_2 = result[3].heading
+    text_2 = result[3].text
+
+    assert len(result) == 4
+    assert heading_1 == heading_2
+    assert text_1 != text_2

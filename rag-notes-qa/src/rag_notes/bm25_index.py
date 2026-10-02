@@ -72,10 +72,13 @@ def score_document(query_terms: list[str], doc_index: int, index: BM25Index) -> 
         n_term = index.doc_freq.get(term, 0)
         if n_term == 0:
             continue  # term never appears anywhere in the corpus
+
+        #IDF — Inverse Document Frequency — Weights the term higher the rarer it is across the corpus
         idf = math.log((n_docs - n_term + 0.5) / (n_term + 0.5) + 1)
-        f = doc_tokens.count(term)
-        numerator = f * (index.k1 + 1)
-        denominator = f + index.k1 * (1 - index.b + index.b * doc_len / index.avgdl)
+        #TF — Term Frequency — How often the term appears in that specific document
+        tf = doc_tokens.count(term)
+        numerator = tf * (index.k1 + 1)
+        denominator = tf + index.k1 * (1 - index.b + index.b * doc_len / index.avgdl)
         score += idf * (numerator / denominator)
     return score
 
