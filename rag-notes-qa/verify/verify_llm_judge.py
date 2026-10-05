@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from llm_compare.providers.anthropic_provider import AnthropicProvider
 from llm_compare.providers.base import LLMProvider
 from llm_compare.providers.openai_provider import OpenAIProvider
+from rag_notes.adapters import StructureChunker
 from rag_notes.generate import build_context, generate_answer, normalize_answer
 from rag_notes.llm_judge import judge_answer
 from rag_notes.models import RetrievalIndex, JudgeResult
@@ -67,7 +68,7 @@ def run_full_judge_eval(
 
 
 def main() -> None:
-    retrieval_index = build_retrieval_index(NOTES_ROOT, PERSIST_PATH)
+    retrieval_index = build_retrieval_index(NOTES_ROOT, PERSIST_PATH, StructureChunker())
 
     judge_results = run_full_judge_eval(
         retrieval_index=retrieval_index,

@@ -4,8 +4,10 @@ from pathlib import Path
 from config import get_notes_root
 from llm_compare.providers.base import LLMProvider
 from llm_compare.providers.ollama_provider import OllamaProvider
+from rag_notes.adapters import StructureChunker, HybridRetriever
 from rag_notes.generate import answer_question, GUARDRAIL_ANSWER
 from rag_notes.models import RetrievalIndex
+from rag_notes.protocols import Retriever
 from rag_notes.retrieval import build_retrieval_index
 
 
@@ -64,11 +66,11 @@ def build_test_cases() -> list[GuardrailCase]:
     ]
 
 
-def run_case(index: RetrievalIndex, case: GuardrailCase, provider: LLMProvider) -> GuardrailResult:
+def run_case(retriever: Retriever, case: GuardrailCase, provider: LLMProvider) -> GuardrailResult:
     """Run one GuardrailCase through answer_question() and record the outcome.
 
     Args:
-        index: A RetrievalIndex from build_retrieval_index().
+        retriever: Retriever Protocol object.
         case: The test case to run.
         provider: An LLMProvider instance to generate the answer with.
 
@@ -76,7 +78,7 @@ def run_case(index: RetrievalIndex, case: GuardrailCase, provider: LLMProvider) 
         A GuardrailResult recording whether the guardrail actually fired
         (answered.answer == GUARDRAIL_ANSWER) and the raw answer text.
     """
-    answered_query = answer_question(index, case.question, provider)
+    answered_query = answer_question(retriever, case.question, provider)
     return GuardrailResult(
         case=case,
         guardrail_fired=answered_query.answer == GUARDRAIL_ANSWER,
@@ -107,11 +109,12 @@ def summarize_results(results: list[GuardrailResult]) -> str:
 def main() -> None:
     """Main function."""
     notes_root: Path = get_notes_root()
-    index: RetrievalIndex = build_retrieval_index(notes_root, PERSIST_PATH)
+    index: RetrievalIndex = build_retrieval_index(notes_root, PERSIST_PATH, StructureChunker())
+    retriever = HybridRetriever(index)
     provider: LLMProvider = OllamaProvider(temperature=0)
     cases: list[GuardrailCase] = build_test_cases()
 
-    guardrail_results: list[GuardrailResult] = [run_case(index, case, provider) for case in cases]
+    guardrail_results: list[GuardrailResult] = [run_case(retriever, case, provider) for case in cases]
     print(*(f"Answer: {result.answer}\nExpected: {result.case.guardrail_expected} Actual: {result.guardrail_fired}" for result in guardrail_results), sep="\n")
     print()
 

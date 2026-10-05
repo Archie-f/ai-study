@@ -87,7 +87,15 @@ class HybridRetriever:
         n: int = 3,
         mode: Literal["hybrid", "vector", "bm25"] = "hybrid",
     ) -> list[tuple[str, float, Chunk]]:
-        """Search this retriever's index (wraps search()/hybrid_search())."""
+        """Search this retriever's index (wraps search()/hybrid_search()).
+
+        Args:
+            query (str): The query to query.
+            n (int): The number of nearest chunks to return.
+            mode: Search mode (hybrid, vector, bm25).
+        Returns:
+            top n (chunk_id, rrf_score, chunk) tuples, highest combined score first
+        """
         return search(
             self.retrieval_index,
             query,

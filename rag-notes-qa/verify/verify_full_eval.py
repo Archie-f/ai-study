@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from llm_compare.providers.anthropic_provider import AnthropicProvider
 from llm_compare.providers.openai_provider import OpenAIProvider
+from rag_notes.adapters import StructureChunker
 from rag_notes.eval_report import save_full_eval_html
 from rag_notes.retrieval import build_retrieval_index
 from verify.verify_llm_judge import run_full_judge_eval
@@ -22,7 +23,7 @@ judge_llm = AnthropicProvider()
 
 
 def main() -> None:
-    retrieval_index = build_retrieval_index(NOTES_ROOT, PERSIST_PATH)
+    retrieval_index = build_retrieval_index(NOTES_ROOT, PERSIST_PATH, StructureChunker())
     mode_reports = compare_retrieval_modes(retrieval_index, GOLDEN_QA_PATH)
     judge_results = run_full_judge_eval(retrieval_index, GOLDEN_QA_PATH, provider_llm, judge_llm)
 

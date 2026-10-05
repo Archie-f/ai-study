@@ -5,17 +5,23 @@ from rag_notes.bm25_index import build_bm25_index
 from rag_notes.embedder import load_embedding_model, embed_chunks
 from rag_notes.loader import load_corpus
 from rag_notes.models import RetrievalIndex, Chunk
-from rag_notes.structure_chunker import chunk_document, BOUNDARY_STYLES
+from rag_notes.protocols import Chunker
 from rag_notes.vector_store import get_collection, add_chunks, delete_collection
 from rag_notes.hybrid_search import hybrid_search
 
 
-def build_retrieval_index(notes_root: Path, persist_path: str) -> RetrievalIndex:
+def build_retrieval_index(
+        notes_root: Path,
+        persist_path: str,
+        chunker: Chunker
+) -> RetrievalIndex:
     """Load, chunk, embed, and index an entire notes corpus, ready for search().
 
     Args:
         notes_root: folder containing the week-*/*.docx corpus
         persist_path: folder to store the Chroma collection in
+        chunker: any object satisfying the Chunker Protocol. Decides how
+            each document will be split into chunks
     Returns:
         a RetrievalIndex bundling the populated collection, the loaded
         embedding model, and the built BM25 index
@@ -25,7 +31,7 @@ def build_retrieval_index(notes_root: Path, persist_path: str) -> RetrievalIndex
     documents = load_corpus(notes_root)
     chunks = []
     for document in documents:
-        document_chunks = chunk_document(document, BOUNDARY_STYLES)
+        document_chunks = chunker.chunk(document)
         chunks.extend(document_chunks)
     embedded_chunks = embed_chunks(chunks, model)
     delete_collection(persist_path)
