@@ -7,7 +7,7 @@ from rag_notes.fixed_chunker import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP, chunk_f
 from rag_notes.models import SourceDocument, Chunk, EmbeddedChunk, RetrievalIndex
 from rag_notes.retrieval import search
 from rag_notes.structure_chunker import BOUNDARY_STYLES, chunk_document
-from rag_notes.vector_store import COLLECTION_NAME, get_collection, add_chunks, get_query_result
+from rag_notes.vector_store import COLLECTION_NAME, get_collection, add_chunks, get_query_result, delete_collection
 
 
 class StructureChunker:
@@ -49,6 +49,8 @@ class FixedSizeChunker:
 
 class ChromaVectorStore:
     def __init__(self, persist_path: str, name: str = COLLECTION_NAME):
+        self.persist_path = persist_path
+        self.name = name
         self.collection = get_collection(persist_path, name)
 
     def add(self, embedded_chunks: list[EmbeddedChunk]) -> None:
@@ -75,6 +77,16 @@ class ChromaVectorStore:
             model,
             n_results
         )
+
+    def reset(self) -> None:
+        """Delete the underlying Chroma collection and open a fresh, empty one
+        (wraps delete_collection() + get_collection()).
+
+        After this call, self.collection is the new collection, so add() and
+        query() keep working.
+        """
+        delete_collection(self.persist_path, self.name)
+        self.collection = get_collection(self.persist_path, self.name)
 
 
 class HybridRetriever:

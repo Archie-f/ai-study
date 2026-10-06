@@ -3,7 +3,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from rag_notes.adapters import StructureChunker
+from rag_notes.adapters import StructureChunker, ChromaVectorStore
 from rag_notes.retrieval import build_retrieval_index, search
 
 
@@ -18,7 +18,8 @@ QUERY = "Why do type hints matter in Python even though the language doesn't enf
 
 
 def main() -> None:
-    index = build_retrieval_index(NOTES_ROOT, PERSIST_PATH, StructureChunker())
+    vector_store = ChromaVectorStore(PERSIST_PATH)
+    index = build_retrieval_index(NOTES_ROOT, vector_store, StructureChunker())
     results = search(index, QUERY, n=5)
     for rank, (chunk_id, score, chunk) in enumerate(results, start=1):
         heading = chunk.heading or "(no heading)"

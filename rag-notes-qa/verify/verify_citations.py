@@ -3,7 +3,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from rag_notes.adapters import StructureChunker
+from rag_notes.adapters import StructureChunker, ChromaVectorStore
 from rag_notes.retrieval import build_retrieval_index, search
 from rag_notes.generate import build_context
 from rag_notes.citations import build_citations, format_citations
@@ -21,7 +21,8 @@ QUESTION = "Why do type hints matter in Python even though the language doesn't 
 
 
 def main() -> None:
-    index = build_retrieval_index(NOTES_ROOT, PERSIST_PATH, StructureChunker())
+    vector_store = ChromaVectorStore(PERSIST_PATH)
+    index = build_retrieval_index(NOTES_ROOT, vector_store, StructureChunker())
     results = search(index, QUESTION, n=5)
 
     context = build_context(results)

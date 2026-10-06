@@ -2,9 +2,8 @@ import argparse
 from pathlib import Path
 
 from config import get_notes_root
-from llm_compare.providers.ollama_provider import OllamaProvider
 from llm_compare.providers.openai_provider import OpenAIProvider
-from rag_notes.adapters import StructureChunker, HybridRetriever
+from rag_notes.adapters import StructureChunker, HybridRetriever, ChromaVectorStore
 from rag_notes.generate import answer_question
 from rag_notes.retrieval import build_retrieval_index
 
@@ -25,7 +24,8 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-index = build_retrieval_index(notes_root, PERSIST_PATH, StructureChunker())
+vector_store = ChromaVectorStore(PERSIST_PATH)
+index = build_retrieval_index(notes_root, vector_store, StructureChunker())
 retriever = HybridRetriever(index)
 provider = OpenAIProvider()
 answer_query = answer_question(

@@ -21,6 +21,10 @@ class VectorStore(Protocol):
         """Return the n_results nearest chunks to query."""
         ...
 
+    def reset(self) -> None:
+        """Remove everything in the store, leaving it empty and ready for add()."""
+        ...
+
 
 class Retriever(Protocol):
     def search(

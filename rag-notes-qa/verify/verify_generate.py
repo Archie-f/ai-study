@@ -7,7 +7,7 @@ from config import get_notes_root
 from llm_compare.providers.ollama_provider import OllamaProvider
 from rag_notes.retrieval import build_retrieval_index
 from rag_notes.generate import display_answer, answer_question
-from rag_notes.adapters import StructureChunker, HybridRetriever
+from rag_notes.adapters import StructureChunker, HybridRetriever, ChromaVectorStore
 
 notes_root_env = get_notes_root()
 NOTES_ROOT = notes_root_env
@@ -20,7 +20,8 @@ QUESTIONS = [
 
 
 def main() -> None:
-    index = build_retrieval_index(NOTES_ROOT, PERSIST_PATH, StructureChunker())
+    vector_store = ChromaVectorStore(PERSIST_PATH)
+    index = build_retrieval_index(NOTES_ROOT, vector_store, StructureChunker())
     retriever = HybridRetriever(index)
     provider = OllamaProvider(temperature=0)
 

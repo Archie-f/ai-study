@@ -4,7 +4,7 @@ from pathlib import Path
 from config import get_notes_root
 from llm_compare.providers.base import LLMProvider
 from llm_compare.providers.ollama_provider import OllamaProvider
-from rag_notes.adapters import StructureChunker, HybridRetriever
+from rag_notes.adapters import StructureChunker, HybridRetriever, ChromaVectorStore
 from rag_notes.generate import answer_question, GUARDRAIL_ANSWER
 from rag_notes.models import RetrievalIndex
 from rag_notes.protocols import Retriever
@@ -109,7 +109,8 @@ def summarize_results(results: list[GuardrailResult]) -> str:
 def main() -> None:
     """Main function."""
     notes_root: Path = get_notes_root()
-    index: RetrievalIndex = build_retrieval_index(notes_root, PERSIST_PATH, StructureChunker())
+    vector_store = ChromaVectorStore(PERSIST_PATH)
+    index: RetrievalIndex = build_retrieval_index(notes_root, vector_store, StructureChunker())
     retriever = HybridRetriever(index)
     provider: LLMProvider = OllamaProvider(temperature=0)
     cases: list[GuardrailCase] = build_test_cases()

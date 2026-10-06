@@ -18,10 +18,14 @@ def get_collection(persist_path: str, name: str = COLLECTION_NAME) -> Collection
         the collection, ready for add() or query()
     """
     client = chromadb.PersistentClient(path=persist_path)
-    return client.get_or_create_collection(
+    collection =  client.get_or_create_collection(
         name=name,
         configuration={"hnsw": {"space": "cosine"}},
     )
+    if collection:
+        print(f"Collection '{collection.name}' opened.")
+
+    return collection
 
 
 def delete_collection(persist_path, name=COLLECTION_NAME):

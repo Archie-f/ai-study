@@ -1,9 +1,12 @@
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from chromadb import Collection
 from sentence_transformers import SentenceTransformer
+
+if TYPE_CHECKING:
+    from rag_notes.protocols import VectorStore
 
 
 @dataclass
@@ -52,7 +55,7 @@ class BM25Index:
 @dataclass
 class RetrievalIndex:
     """Everything needed to run a hybrid search against one notes corpus."""
-    collection: Collection
+    vector_store: "VectorStore"
     model: SentenceTransformer
     bm25_index: BM25Index
 

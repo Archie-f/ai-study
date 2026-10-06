@@ -2,7 +2,7 @@ from typing import Literal
 
 from rag_notes.models import BM25Index, Chunk
 from rag_notes.bm25_index import bm25_search
-from rag_notes.vector_store import get_query_result
+from rag_notes.protocols import VectorStore
 
 
 def build_rank_map(ordered_ids: list[str]) -> dict[str, int]:
@@ -44,7 +44,7 @@ def rrf_merge(rank_maps: list[dict[str, int]], k: int = 60) -> list[tuple[str, f
 
 def hybrid_search(
         query: str,
-        collection,
+        vector_store: VectorStore,
         model,
         bm25_index: BM25Index,
         n: int = 3,
@@ -54,9 +54,9 @@ def hybrid_search(
 
     Args:
         query: raw query string
-        collection: an already-populated Chroma collection
+        vector_store: an already-populated VectorStore object
         model: the SentenceTransformer model used to embed the query
-        bm25_index: a built BM25Index over the same chunks as the collection
+        bm25_index: a built BM25Index over the same chunks as the vector store
         n: how many merged results to return
         mode: "hybrid" (default, current behavior), "vector" (dense-only, no fusion),
             or "bm25" (sparse-only, no fusion)
@@ -74,8 +74,7 @@ def hybrid_search(
             for score, chunk in sparse_results
         ]
     elif mode == "vector":
-        dense_results = get_query_result(
-            collection=collection,
+        dense_results = vector_store.query(
             query=query,
             model=model,
             n_results=n
@@ -88,8 +87,7 @@ def hybrid_search(
             for distance, chunk_id in zip(distances, dense_ids)
         ]
     else:
-        dense_results = get_query_result(
-            collection=collection,
+        dense_results = vector_store.query(
             query=query,
             model=model,
             n_results=n
