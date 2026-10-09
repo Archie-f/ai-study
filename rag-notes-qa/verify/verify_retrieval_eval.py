@@ -14,6 +14,7 @@ load_dotenv()
 NOTES_ROOT = Path(os.getenv("NOTES_ROOT"))
 PERSIST_PATH = str(Path(__file__).parent.parent / "persistent")
 GOLDEN_QA_PATH = Path(__file__).parent.parent / "data" / "golden_qa.json"
+EVAL_CORPUS_PATH = Path(__file__).parent.parent / "data" / "eval_corpus"
 mode_list = ["hybrid", "vector", "bm25"]
 
 def run_retrieval_eval(
@@ -92,7 +93,7 @@ def compare_retrieval_modes(
 
 def main():
     vector_store = ChromaVectorStore(PERSIST_PATH)
-    index = build_retrieval_index(NOTES_ROOT, vector_store, StructureChunker())
+    index = build_retrieval_index(EVAL_CORPUS_PATH, vector_store, StructureChunker())
     report = run_retrieval_eval(index, GOLDEN_QA_PATH)
     print(report)
     print("-" * 20)
