@@ -92,12 +92,16 @@ def bm25_search(query: str, index: BM25Index, n_results: int = 3) -> list[tuple[
         index: a built BM25Index
         n_results: how many top matches to return
     Returns:
-        list of (score, chunk) tuples, sorted highest score first
+        up to n_results (score, chunk) tuples with score > 0, highest
+        score first; fewer (or none) when fewer chunks contain any
+        query term
     """
     query_terms = tokenize(query)
-    scored = [
-        (score_document(query_terms, i, index), index.chunks[i])
-        for i in range(len(index.chunks))
-    ]
+    scored = []
+    for i in range(len(index.chunks)):
+        score = score_document(query_terms, i, index)
+        if score > 0.0:
+            scored.append((score, index.chunks[i]))
+
     scored.sort(key=lambda x: x[0], reverse=True)
     return scored[:n_results]

@@ -23,7 +23,9 @@ def rrf_merge(rank_maps: list[dict[str, int]], k: int = 60) -> list[tuple[str, f
         rank_maps: one dict per ranker, each id -> 1-based rank
         k: RRF damping constant
     Returns:
-        list of (chunk_id, rrf_score) tuples, highest score first
+        list of (chunk_id, rrf_score) tuples, highest score first;
+        equal scores are ordered by chunk_id ascending, so the result
+        does not depend on set iteration order
     """
     all_ids: set[str] = set()
     for rank_map in rank_maps:
@@ -38,7 +40,7 @@ def rrf_merge(rank_maps: list[dict[str, int]], k: int = 60) -> list[tuple[str, f
                 score += 1 / (k + rank)
         scored.append((chunk_id, score))
 
-    scored.sort(key=lambda x: x[1], reverse=True)
+    scored.sort(key=lambda x: (-x[1], x[0]))
     return scored
 
 
