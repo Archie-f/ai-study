@@ -1,20 +1,13 @@
 import json
-import os
 from pathlib import Path
 from typing import Literal
 
-from dotenv import load_dotenv
-
+from config import PERSIST_PATH, EVAL_CORPUS_PATH, GOLDEN_QA_PATH
 from rag_notes.adapters import StructureChunker, ChromaVectorStore
 from rag_notes.models import RetrievalIndex, RetrievalEvalReport
 from rag_notes.retrieval import build_retrieval_index, search
 from rag_notes.retrieval_metrics import recall_at_k, reciprocal_rank, mean_reciprocal_rank
 
-load_dotenv()
-NOTES_ROOT = Path(os.getenv("NOTES_ROOT"))
-PERSIST_PATH = str(Path(__file__).parent.parent / "persistent")
-GOLDEN_QA_PATH = Path(__file__).parent.parent / "data" / "golden_qa.json"
-EVAL_CORPUS_PATH = Path(__file__).parent.parent / "data" / "eval_corpus"
 mode_list = ["hybrid", "vector", "bm25"]
 
 def run_retrieval_eval(

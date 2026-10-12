@@ -163,3 +163,15 @@ def test_hybrid_search_ignores_zero_score_bm25_chunks():
     hybrid_search_result = hybrid_search(query, fake_vector_store, model, bm25_index, n, mode="hybrid")
     result_ids = [chunk_id for chunk_id, _, _ in hybrid_search_result]
     assert result_ids == ["fake-1", "fake-0", "fake-2"]
+
+
+def test_hybrid_search_merges_both_sides_when_they_disagree():
+    bm25_index = build_bm25_index([chunk_one, chunk_two, chunk_three])
+    results = {"ids": [["fake-2", "fake-1"]], "distances": [[0.20, 0.30]]}
+    fake_vector_store = FakeVectorStore(result=results)
+    query = "RRF rankings"
+    model = "fake_model"
+    n = 2
+    hybrid_search_result = hybrid_search(query, fake_vector_store, model, bm25_index, n, mode="hybrid")
+    result_ids = [chunk_id for chunk_id, _, _ in hybrid_search_result]
+    assert result_ids == ["fake-1", "fake-2"]

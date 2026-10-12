@@ -1,11 +1,12 @@
 from pathlib import Path
 from typing import Literal
 
+from config import PERSIST_PATH, EVAL_CORPUS_PATH, GOLDEN_QA_PATH
 from rag_notes.adapters import ChromaVectorStore, StructureChunker, FixedSizeChunker
 from rag_notes.models import RetrievalEvalReport
 from rag_notes.protocols import VectorStore, Chunker
 from rag_notes.retrieval import build_retrieval_index
-from verify.verify_retrieval_eval import compare_retrieval_modes, EVAL_CORPUS_PATH, GOLDEN_QA_PATH, PERSIST_PATH
+from verify.verify_retrieval_eval import compare_retrieval_modes
 
 
 def compare_chunking_strategies(

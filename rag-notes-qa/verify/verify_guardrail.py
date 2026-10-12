@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from config import get_notes_root
+from config import get_notes_root, PERSIST_PATH
 from llm_compare.providers.base import LLMProvider
 from llm_compare.providers.ollama_provider import OllamaProvider
 from rag_notes.adapters import StructureChunker, HybridRetriever, ChromaVectorStore
@@ -9,9 +9,6 @@ from rag_notes.generate import answer_question, GUARDRAIL_ANSWER
 from rag_notes.models import RetrievalIndex
 from rag_notes.protocols import Retriever
 from rag_notes.retrieval import build_retrieval_index
-
-
-PERSIST_PATH = str(Path(__file__).parent.parent / "persistent")
 
 
 @dataclass

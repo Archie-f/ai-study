@@ -18,3 +18,8 @@ def get_notes_root() -> Path:
     if path is None:
         raise RuntimeError("NOTES_ROOT environment variable doesn't exist  — check your .env file")
     return Path(path)
+
+PROJECT_ROOT = Path(__file__).parent # rag-notes-qa/
+PERSIST_PATH = str(PROJECT_ROOT / "persistent")
+GOLDEN_QA_PATH = PROJECT_ROOT / "data" / "golden_qa.json"
+EVAL_CORPUS_PATH = PROJECT_ROOT / "data" / "eval_corpus"

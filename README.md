@@ -45,6 +45,7 @@ python week-02/hello_llm.py
 | Week 12 | RAG: Generation — prompt assembly, citations, guardrails, CLI                           | Done   |
 | Week 13 | RAG: Evaluation — retrieval metrics (recall@k/MRR), LLM-as-judge, HTML report           | Done   |
 | Week 14 | Consolidate #2 — rebuild from memory, swappable-interface Protocols + adapters          | Done   |
+| Week 15 | RAG comparison — Protocols wired, frozen eval corpus, chunking & retrieval-mode comparison | Done   |
 
 ## What I Learned
 ### Week 01
@@ -141,3 +142,24 @@ python week-02/hello_llm.py
 - Found and fixed a real prompt-injection vulnerability live: an adversarial question got the model to ignore its own system prompt and answer from training data; hardened `SYSTEM_PROMPT` with an explicit anti-override clause and re-verified 4/4 on the guardrail test suite
 - Learned pytest's actual `sys.path` insertion rule — it adds the first `__init__.py`-less directory walking up from the test file, not the project rootdir — via a real `ModuleNotFoundError`, fixed with `pythonpath = ["."]` in `pyproject.toml`
 - Shipped the end-to-end CLI (`ask.py`) tying retrieval → generation → citations → guardrail into one command
+
+### Week 13
+- Built retrieval-quality metrics from scratch (recall@k, reciprocal rank, MRR) and measured the real pipeline against the golden set — the first honest numbers for this RAG system
+- Gave search a selectable mode (hybrid / vector-only / BM25-only) so quality could be broken out per method — and saw that hybrid was not automatically the winner on this small set
+- Built an LLM-as-judge faithfulness scorer on top of the existing `LLMProvider` abstraction and found that the generator model drives end-to-end quality as much as retrieval does (3/13 passing with a small local model, 7/13 with a stronger one)
+- Learned that metric code fails quietly: averaging over the wrong axis, or passing a string where a set was expected (`in` then does substring matching), still produces plausible-looking numbers
+- Tied it all into one self-contained HTML report with a filterable per-question table
+
+### Week 14 (Consolidate #2)
+- Rebuilt generation and evaluation from memory; every real bug was a shape, argument or loop-bound mistake, not a conceptual one
+- Built three swappable interfaces (`Chunker`, `VectorStore`, `Retriever`) as Python Protocols with thin adapters, split along ports-and-adapters lines (`protocols.py` / `adapters.py`)
+- Closed Python-fundamentals gaps exposed by the week's bugs: sets are unordered and unindexable, a trailing comma makes a tuple, positional-only parameters, iterating a dict yields keys
+- Learned to verify an adapter by equivalence (same arguments in, same result out) instead of accepting it on inspection
+- Applied the semver rule to a consolidate week: new public classes are a new capability, so `v0.14.0` rather than a silent merge
+
+### Week 15
+- Wired the swappable interfaces into the real pipeline: chunker, vector store and retriever are now passed in, so the same code runs any combination
+- Froze an evaluation corpus so a measurement taken today can be repeated tomorrow — and learned that a number without its corpus and date is not a result
+- Ran a chunking comparison and found the metric itself was biased: document-level relevance rewards strategies that cut the relevant document into more chunks
+- Found and fixed two retrieval bugs the professional way — measure, fix, test, measure again: RRF ties decided by set order (hybrid results changed between runs) and BM25 padding its results with zero-score chunks
+- Learned to read small evaluation sets honestly: convert differences into questions, and only trust an effect that points the same way across several cutoffs

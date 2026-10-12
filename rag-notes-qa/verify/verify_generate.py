@@ -3,15 +3,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from config import get_notes_root
+from config import get_notes_root, PERSIST_PATH
 from llm_compare.providers.ollama_provider import OllamaProvider
 from rag_notes.retrieval import build_retrieval_index
 from rag_notes.generate import display_answer, answer_question
 from rag_notes.adapters import StructureChunker, HybridRetriever, ChromaVectorStore
 
-notes_root_env = get_notes_root()
-NOTES_ROOT = notes_root_env
-PERSIST_PATH = str(Path(__file__).parent.parent / "persistent")
+NOTES_ROOT = get_notes_root()
 
 QUESTIONS = [
     "Why do type hints matter in Python even though the language doesn't enforce them at runtime?", # in-scope question
