@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from rag_notes.bm25_index import tokenize, build_doc_frequencies, build_bm25_index, score_document
+from rag_notes.bm25_index import tokenize, build_doc_frequencies, build_bm25_index, score_document, bm25_search
 from rag_notes.models import Chunk, DocumentMetadata
 
 _fake_metadata = DocumentMetadata(week=10, day=5, file_path=Path("fake.docx"), title="fake")
@@ -50,3 +50,14 @@ def test_score_document_is_zero_when_query_terms_absent_from_doc():
 def test_score_document_is_zero_when_query_term_unseen_in_corpus():
     query_terms = tokenize("batman")
     assert score_document(query_terms, 0, movie_index) == 0.0
+
+
+def test_bm25_search_returns_only_matching_chunks():
+    results = bm25_search("steel", movie_index, 2)
+    chunk_index_list = [chunk.chunk_index for _, chunk in results]
+    assert chunk_index_list == [1]
+
+
+def test_bm25_search_returns_empty_list_when_no_term_matches():
+    results = bm25_search("batman", movie_index, 2)
+    assert results == []

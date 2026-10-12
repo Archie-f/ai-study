@@ -1,24 +1,18 @@
 import json
-import os
 from pathlib import Path
 
-from dotenv import load_dotenv
 
+from config import PERSIST_PATH, EVAL_CORPUS_PATH, GOLDEN_QA_PATH
 from llm_compare.providers.anthropic_provider import AnthropicProvider
 from llm_compare.providers.base import LLMProvider
 from llm_compare.providers.openai_provider import OpenAIProvider
+from rag_notes.adapters import StructureChunker, ChromaVectorStore
 from rag_notes.generate import build_context, generate_answer, normalize_answer
 from rag_notes.llm_judge import judge_answer
 from rag_notes.models import RetrievalIndex, JudgeResult
 from rag_notes.retrieval import search, build_retrieval_index
-from verify.verify_retrieval_eval import GOLDEN_QA_PATH
 
-load_dotenv()
-notes_root_env = os.getenv("NOTES_ROOT")
-if notes_root_env is None:
-    raise RuntimeError("NOTES_ROOT not set — check your .env file")
-NOTES_ROOT = Path(notes_root_env)
-PERSIST_PATH = str(Path(__file__).parent.parent / "persistent")
+
 provider_llm = OpenAIProvider()
 judge_llm = AnthropicProvider()
 
@@ -67,7 +61,8 @@ def run_full_judge_eval(
 
 
 def main() -> None:
-    retrieval_index = build_retrieval_index(NOTES_ROOT, PERSIST_PATH)
+    vector_store = ChromaVectorStore(PERSIST_PATH)
+    retrieval_index = build_retrieval_index(EVAL_CORPUS_PATH, vector_store, StructureChunker())
 
     judge_results = run_full_judge_eval(
         retrieval_index=retrieval_index,

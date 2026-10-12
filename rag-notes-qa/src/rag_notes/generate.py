@@ -1,8 +1,7 @@
-from rag_notes import retrieval
 from rag_notes.citations import build_source_label, build_citations, format_citations
-from rag_notes.models import Chunk, RetrievalIndex, AnsweredQuery
+from rag_notes.models import Chunk, AnsweredQuery
 from llm_compare.providers.base import LLMProvider, LLMResult
-
+from rag_notes.protocols import Retriever
 
 NO_ANSWER_TOKEN = "NO_ANSWER_FOUND"
 GUARDRAIL_ANSWER = "I don't know"
@@ -88,15 +87,20 @@ def normalize_answer(text: str) -> str:
     return GUARDRAIL_ANSWER if NO_ANSWER_TOKEN in text else text
 
 
-def answer_question(index: RetrievalIndex, question: str, provider: LLMProvider, n: int = 5) -> AnsweredQuery:
-    """Run the full pipeline — retrieval, generation, citations — for one question.
+def answer_question(
+        retriever: Retriever,
+        question: str,
+        provider: LLMProvider,
+        n: int = 5
+) -> AnsweredQuery:
+    """Run the full pipeline - retrieval, generation, citations - for one question.
 
     If build_context() raises ValueError (no results to build context from),
     skip generation entirely and return the guardrail answer with no citations
     instead of letting the exception propagate.
 
     Args:
-        index: A RetrievalIndex from build_retrieval_index().
+        retriever: Retriever Protocol object.
         question: The question to answer.
         provider: An LLMProvider instance to generate the answer with.
         n: How many search() results to retrieve and cite.
@@ -106,7 +110,7 @@ def answer_question(index: RetrievalIndex, question: str, provider: LLMProvider,
         and the citations backing it — citations empty when the
         guardrail fired before generation.
     """
-    results = retrieval.search(index, question, n=n)
+    results = retriever.search(question, n=n)
     try:
         context = build_context(results)
     except ValueError:
