@@ -102,5 +102,285 @@
     "expected_answer_text": "word count and token count diverge, sometimes significantly, and chunk-size limits in real systems are almost always expressed in tokens because that's what the embedding/LLM context window actually measures",
     "answer_key": "chunk-size limits in real systems are almost always expressed in tokens",
     "notes": ""
+  },
+  {
+    "id": "q014",
+    "question": "How does a Python script pick up secrets that are stored in a .env file?",
+    "source_document": "week-02-day-01-takeaway-notes",
+    "expected_answer_text": "python-dotenv reads your .env file and loads its values into os.environ at runtime. After calling load_dotenv(), any key in .env is accessible via os.getenv() — exactly as if you had exported it in your shell.",
+    "answer_key": "reads your .env file and loads its values into os.environ at runtime",
+    "notes": "lexical"
+  },
+  {
+    "id": "q015",
+    "question": "In the Anthropic SDK, where does the system prompt go?",
+    "source_document": "week-02-day-01-takeaway-notes",
+    "expected_answer_text": "The system prompt is separate from messages[]. It sets the model's persona and behaviour for the entire conversation. In the Anthropic SDK it is a top-level parameter, not a message.",
+    "answer_key": "In the Anthropic SDK it is a top-level parameter, not a message",
+    "notes": "lexical"
+  },
+  {
+    "id": "q016",
+    "question": "What is the difference between the three ways of resetting a commit in git?",
+    "source_document": "week-02-day-02-takeaway-notes",
+    "expected_answer_text": "git reset --hard HEAD~1 discards changes permanently. Know the difference: --soft keeps changes staged, --mixed (default) keeps them unstaged, --hard discards everything.",
+    "answer_key": "--soft keeps changes staged, --mixed (default) keeps them unstaged, --hard discards everything",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q017",
+    "question": "Why doesn't a teammate get my commit-message check when they pull the project?",
+    "source_document": "week-02-day-02-takeaway-notes",
+    "expected_answer_text": ".git/hooks/ is NOT committed to the repo — it is local only. Every developer who clones the repo must set it up manually.",
+    "answer_key": ".git/hooks/ is NOT committed to the repo — it is local only",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q018",
+    "question": "Why run a package with python -m instead of pointing python at its __main__.py file?",
+    "source_document": "week-03-day-01-takeaway-notes",
+    "expected_answer_text": "python mypackage/__main__.py changes sys.path in a way that can break relative imports. python -m mypackage sets up sys.path correctly. Always use -m for packages.",
+    "answer_key": "changes sys.path in a way that can break relative imports",
+    "notes": "lexical"
+  },
+  {
+    "id": "q019",
+    "question": "When does the else block that follows a while loop actually run?",
+    "source_document": "week-03-day-01-takeaway-notes",
+    "expected_answer_text": "Python's while loop has an optional else clause. It runs when the loop ends naturally (condition becomes false), NOT when it ends via break.",
+    "answer_key": "It runs when the loop ends naturally (condition becomes false), NOT when it ends via break",
+    "notes": "lexical"
+  },
+  {
+    "id": "q020",
+    "question": "Why should each unit test build its own data instead of sharing one list with other tests?",
+    "source_document": "week-03-day-03-takeaway-notes",
+    "expected_answer_text": "If test_1 adds a message to a shared history list and test_2 reads from the same list, test_2 will fail or pass for the wrong reasons depending on test order. pytest does not guarantee order.",
+    "answer_key": "test_2 will fail or pass for the wrong reasons depending on test order",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q021",
+    "question": "What two things does assert_called_once_with() check?",
+    "source_document": "week-03-day-03-takeaway-notes",
+    "expected_answer_text": "assert_called_once_with() checks two conditions in one call: the mock was called exactly once (not zero times, not twice), AND it was called with the exact arguments you specify.",
+    "answer_key": "the mock was called exactly once (not zero times, not twice), AND it was called with the exact arguments you specify",
+    "notes": "lexical"
+  },
+  {
+    "id": "q022",
+    "question": "Why show the model a few solved examples before asking it the real question?",
+    "source_document": "week-04-day-01-takeaway-notes",
+    "expected_answer_text": "Provide 2-5 input/output examples before the new input. This encodes your definition of correct through examples, not descriptions — eliminating ambiguity.",
+    "answer_key": "encodes your definition of correct through examples, not descriptions",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q023",
+    "question": "Why does each LLM provider need its own code to pull the reply text out of the response?",
+    "source_document": "week-05-day-02-takeaway-notes",
+    "expected_answer_text": "The text is at data[\"message\"][\"content\"], not data[\"content\"][0][\"text\"] (Anthropic) or data[\"choices\"][0][\"message\"][\"content\"] (OpenAI). Every provider has its own shape — this is exactly why the provider abstraction exists.",
+    "answer_key": "Every provider has its own shape — this is exactly why the provider abstraction exists",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q024",
+    "question": "Why set a time limit on requests to a model that runs on your own laptop?",
+    "source_document": "week-05-day-02-takeaway-notes",
+    "expected_answer_text": "timeout=120 — local models are slower than cloud APIs. Without a timeout, a large model could leave your program hanging indefinitely. 120 seconds is generous for llama3 on a MacBook.",
+    "answer_key": "Without a timeout, a large model could leave your program hanging indefinitely",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q025",
+    "question": "What is the only job of the function that sends one prompt to every provider?",
+    "source_document": "week-05-day-03-takeaway-notes",
+    "expected_answer_text": "It does not print anything. It does not save to disk. It does not catch exceptions (that is Day 4's job). Its single responsibility is: ask each provider, collect results, return the object.",
+    "answer_key": "Its single responsibility is: ask each provider, collect results, return the object",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q026",
+    "question": "What is conftest.py and why don't you import it?",
+    "source_document": "week-05-day-03-takeaway-notes",
+    "expected_answer_text": "conftest.py is a special pytest file that runs automatically before any tests in the same folder. You do not import it — pytest finds and executes it on its own.",
+    "answer_key": "conftest.py is a special pytest file that runs automatically before any tests in the same folder",
+    "notes": "lexical"
+  },
+  {
+    "id": "q027",
+    "question": "Why does saving a record that contains a date crash when you write it as JSON?",
+    "source_document": "week-06-day-04-takeaway-notes",
+    "expected_answer_text": "That dict looks fine until it hits json.dumps() — JSON has no native date type, so the encoder has nothing to convert a datetime into, and the call crashes.",
+    "answer_key": "JSON has no native date type, so the encoder has nothing to convert a datetime into",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q028",
+    "question": "Why is the model's reply more expensive than the prompt you send it?",
+    "source_document": "week-07-day-01-takeaway-notes",
+    "expected_answer_text": "Input tokens are processed once, in parallel, as the model reads your prompt. Output tokens are generated one at a time, sequentially — each new token requires a full forward pass through the model conditioned on everything generated so far.",
+    "answer_key": "Output tokens are generated one at a time, sequentially — each new token requires a full forward pass",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q029",
+    "question": "What do you give up in exchange for the Batch API discount?",
+    "source_document": "week-07-day-01-takeaway-notes",
+    "expected_answer_text": "In exchange for accepting results within a longer window — typically up to 24 hours rather than seconds — both providers currently offer roughly a 50% discount on both input and output tokens.",
+    "answer_key": "accepting results within a longer window — typically up to 24 hours rather than seconds",
+    "notes": "lexical"
+  },
+  {
+    "id": "q030",
+    "question": "What does defaultdict(list) do when you read a key that does not exist yet?",
+    "source_document": "week-07-day-03-takeaway-notes",
+    "expected_answer_text": "defaultdict(list) — a dict subclass where reading a missing key creates it with an empty list instead of raising KeyError.",
+    "answer_key": "a dict subclass where reading a missing key creates it with an empty list instead of raising KeyError",
+    "notes": "lexical"
+  },
+  {
+    "id": "q031",
+    "question": "After installing my package for development, why do code changes show up without reinstalling it?",
+    "source_document": "week-08-day-02-takeaway-notes",
+    "expected_answer_text": "Running pip install -e . reads that file and creates an editable install — Python treats the package as installed, but the code still lives in your working folder, so edits show up immediately with no reinstall step.",
+    "answer_key": "Python treats the package as installed, but the code still lives in your working folder",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q032",
+    "question": "Why can't you read a Word document with a plain open() call?",
+    "source_document": "week-09-day-01-takeaway-notes",
+    "expected_answer_text": "A .docx file is not a text file — it's a ZIP archive containing XML. Opening one with open(path).read() gets you binary garbage, not paragraphs.",
+    "answer_key": "A .docx file is not a text file — it's a ZIP archive containing XML",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q033",
+    "question": "Why compare two embeddings by their angle rather than by the plain distance between them?",
+    "source_document": "week-10-day-01-takeaway-notes",
+    "expected_answer_text": "Raw Euclidean distance would penalize that length difference even though the meaning matches. Cosine similarity ignores magnitude entirely and measures only the angle between two vectors.",
+    "answer_key": "Raw Euclidean distance would penalize that length difference even though the meaning matches",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q034",
+    "question": "Is it better to turn all the text pieces into vectors in one go or one at a time?",
+    "source_document": "week-10-day-01-takeaway-notes",
+    "expected_answer_text": "model.encode() accepts a list of strings just as happily as a single string, returning a 2D array (one row per input) instead of a 1D one — embedding every chunk in one call is both simpler and far faster than looping and calling .encode() once per chunk.",
+    "answer_key": "embedding every chunk in one call is both simpler and far faster than looping",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q035",
+    "question": "What goes wrong if a keyword score just adds up how often each search word appears?",
+    "source_document": "week-10-day-03-takeaway-notes",
+    "expected_answer_text": "Common words like \"the\" or \"a\" appear constantly and would dominate the score without carrying any real information about relevance. And a long document scores higher than a short one purely by containing more words overall.",
+    "answer_key": "Common words like \"the\" or \"a\" appear constantly and would dominate the score",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q036",
+    "question": "Why must the stored text and the user's question be split into words in exactly the same way?",
+    "source_document": "week-10-day-03-takeaway-notes",
+    "expected_answer_text": "Both indexing and querying need to split text into words the exact same way, or a query term that's technically \"the same word\" as one in a document will fail to match due to casing or punctuation.",
+    "answer_key": "will fail to match due to casing or punctuation",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q037",
+    "question": "Why can't the semantic score and the keyword score simply be added together?",
+    "source_document": "week-10-day-04-takeaway-notes",
+    "expected_answer_text": "This breaks immediately because the two scores don't live on the same scale. Chroma's cosine similarity is bounded, roughly 0 to 1 for normalized embeddings. BM25 is unbounded.",
+    "answer_key": "This breaks immediately because the two scores don't live on the same scale",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q038",
+    "question": "How does Reciprocal Rank Fusion score a chunk?",
+    "source_document": "week-10-day-04-takeaway-notes",
+    "expected_answer_text": "RRF scores a chunk using only the position it holds in each ranked list it appears in — never the raw score.",
+    "answer_key": "RRF scores a chunk using only the position it holds in each ranked list it appears in",
+    "notes": "lexical"
+  },
+  {
+    "id": "q039",
+    "question": "How does LangChain's v1 documentation define an agent?",
+    "source_document": "week-11-day-04-takeaway-notes",
+    "expected_answer_text": "The current (v1, 2026) definition LangChain's own docs give is blunt: \"an agent is a model calling tools in a loop until a given task is complete.\"",
+    "answer_key": "an agent is a model calling tools in a loop until a given task is complete",
+    "notes": "lexical"
+  },
+  {
+    "id": "q040",
+    "question": "What state does search() keep between two calls?",
+    "source_document": "week-11-day-04-takeaway-notes",
+    "expected_answer_text": "rag_notes has no memory of any kind today -- search() is a pure, stateless function: same query in, same ranked chunks out, no awareness that a previous call ever happened.",
+    "answer_key": "search() is a pure, stateless function: same query in, same ranked chunks out",
+    "notes": "lexical"
+  },
+  {
+    "id": "q041",
+    "question": "What does a model tend to do when the passages it was given don't fully answer the question?",
+    "source_document": "week-12-day-01-takeaway-notes",
+    "expected_answer_text": "A model “wants” to be helpful, and if the retrieved context doesn't fully answer the question, it will often quietly fill the gap from its own training knowledge — which breaks the entire premise of “this answer came from your notes.”",
+    "answer_key": "it will often quietly fill the gap from its own training knowledge",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q042",
+    "question": "What happens to the listed sources when the assistant answers that it doesn't know?",
+    "source_document": "week-12-day-03-takeaway-notes",
+    "expected_answer_text": "Dropping them would be misleading in the other direction — pretending nothing was retrieved when something was, just not enough. Keeping them is the honest choice: they're the real chunks retrieval found and handed to the model.",
+    "answer_key": "Keeping them is the honest choice: they're the real chunks retrieval found and handed to the model",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q043",
+    "question": "Why is recall@k not enough on its own to judge how well a retriever ranks?",
+    "source_document": "week-13-day-01-takeaway-notes",
+    "expected_answer_text": "Recall@k treats a relevant chunk at rank 1 exactly the same as one at rank k — both just count as a hit. That hides a real quality difference.",
+    "answer_key": "Recall@k treats a relevant chunk at rank 1 exactly the same as one at rank k",
+    "notes": "lexical"
+  },
+  {
+    "id": "q044",
+    "question": "Why is an empty list a risky default value for a function parameter?",
+    "source_document": "week-13-day-01-takeaway-notes",
+    "expected_answer_text": "Python default argument values are evaluated once, at function-definition time — not on every call. A mutable default (a list) is shared across every call that doesn't pass its own value.",
+    "answer_key": "Python default argument values are evaluated once, at function-definition time — not on every call",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q045",
+    "question": "Why can't a generated answer be checked with a simple string comparison against the expected text?",
+    "source_document": "week-13-day-03-takeaway-notes",
+    "expected_answer_text": "Every golden entry has an expected_answer_text, but two correct answers can be worded completely differently. A == or in string check would mark the second one wrong. You need something that understands meaning, not characters.",
+    "answer_key": "two correct answers can be worded completely differently",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q046",
+    "question": "What is a typing.Protocol?",
+    "source_document": "week-14-day-04-takeaway-notes",
+    "expected_answer_text": "A Protocol is a class that declares a shape -- method names, parameters, return types -- without any implementation.",
+    "answer_key": "A Protocol is a class that declares a shape -- method names, parameters, return types -- without any implementation",
+    "notes": "lexical"
+  },
+  {
+    "id": "q047",
+    "question": "What changes when retrieval becomes an object instead of a function you pass the index to every time?",
+    "source_document": "week-14-day-04-takeaway-notes",
+    "expected_answer_text": "search(retrieval_index, query, n, mode) always takes the index as its first argument -- there's no object you can just call .search(query) on. The Protocol flips that: a Retriever is something that already knows its own index and only needs a query.",
+    "answer_key": "a Retriever is something that already knows its own index and only needs a query",
+    "notes": "paraphrase"
+  },
+  {
+    "id": "q048",
+    "question": "Why does the project have two dependency files instead of one?",
+    "source_document": "AI-Study-Comprehensive-Notes",
+    "expected_answer_text": "Runtime deps (requirements.txt) — needed to run the app. Dev deps (requirements-dev.txt) — only needed in development and CI (ruff, pytest).",
+    "answer_key": "Dev deps (requirements-dev.txt) — only needed in development and CI",
+    "notes": "paraphrase"
   }
 ]
