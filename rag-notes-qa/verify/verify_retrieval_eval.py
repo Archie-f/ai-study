@@ -81,6 +81,7 @@ def compare_retrieval_modes(
     golden_qa_path: Path,
     k_values: list[int] | None = None,
     modes: list[Literal["hybrid", "vector", "bm25"]] | None = None,
+    level: Literal["document", "chunk"] = "document"
 ) -> dict[str, RetrievalEvalReport]:
     """Run run_retrieval_eval() once per retrieval mode and collect the results.
 
@@ -89,12 +90,21 @@ def compare_retrieval_modes(
         golden_qa_path: path to golden_qa.json
         k_values: which recall@k cutoffs to report
         modes: which modes to compare (defaults to hybrid, vector, and bm25)
+        level: forwarded to run_retrieval_eval()
     Returns:
         a dict mapping each mode name to its RetrievalEvalReport
     """
     if modes is None:
         modes = ["hybrid", "vector", "bm25"]
-    return {mode: run_retrieval_eval(retrieval_index, golden_qa_path, k_values, mode) for mode in modes}
+    return {
+        mode: run_retrieval_eval(
+            retrieval_index=retrieval_index,
+            golden_qa_path=golden_qa_path,
+            k_values=k_values,
+            mode=mode,
+            level=level)
+        for mode in modes
+    }
 
 
 def main():
