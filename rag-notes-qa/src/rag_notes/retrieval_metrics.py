@@ -1,3 +1,6 @@
+from rag_notes.models import Chunk
+
+
 def recall_at_k(retrieved_ids: list[str], relevant_ids: set[str], k: int) -> float:
     """Return 1.0 if any of the top-k retrieved IDs is relevant, else 0.0.
 
@@ -37,3 +40,44 @@ def mean_reciprocal_rank(scores: list[float]) -> float:
     if len(scores) == 0:
         return 0.0
     return sum(scores) / len(scores)
+
+
+def normalize_text(text: str) -> str:
+    """Lowercase text and collapse every run of whitespace into one space.
+
+    Leading and trailing whitespace is removed.
+
+    Args:
+        text: any string, e.g. a chunk's text or an answer key
+    Returns:
+        the normalized string
+    """
+    return " ".join(text.lower().split()).strip()
+
+
+def find_relevant_chunk_ids(chunks: list[Chunk], answer_key: str) -> set[str]:
+    """Return the ids of every chunk whose text contains answer_key.
+
+    Both the chunk text and the key are compared after normalize_text().
+    Ids use the same format as hybrid_search(): "<source.title>-<chunk_index>".
+
+    Args:
+        chunks: every chunk in the index (e.g. retrieval_index.bm25_index.chunks)
+        answer_key: the golden entry's short answer span
+    Returns:
+        the set of matching chunk ids; empty if no chunk contains the key
+    Raises:
+        ValueError: if answer_key is empty after normalization
+    """
+    answer_key = normalize_text(answer_key)
+    if answer_key == "":
+        raise ValueError("Answer_key cannot be an empty string")
+
+    relevant_chunk_ids: set[str] = set()
+    for chunk in chunks:
+        chunk_text = normalize_text(chunk.text)
+        if answer_key in chunk_text:
+            chunk_id = f"{chunk.source.title}-{chunk.chunk_index}"
+            relevant_chunk_ids.add(chunk_id)
+
+    return relevant_chunk_ids

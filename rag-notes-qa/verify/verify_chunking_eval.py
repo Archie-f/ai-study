@@ -16,6 +16,7 @@ def compare_chunking_strategies(
     chunkers: dict[str, Chunker],
     k_values: list[int] | None = None,
     modes: list[Literal["hybrid", "vector", "bm25"]] | None = None,
+    level: Literal["document", "chunk"] = "document"
 ) -> dict[str, dict[str, RetrievalEvalReport]]:
     """Evaluate several chunking strategies on the same corpus and questions.
 
@@ -30,13 +31,24 @@ def compare_chunking_strategies(
         chunkers: strategy name -> Chunker, e.g. {"structure": StructureChunker()}
         k_values: which recall@k cutoffs to report
         modes: which retrieval modes to compare
+        level: forwarded to compare_retrieval_modes()
     Returns:
         {strategy name: {mode name: RetrievalEvalReport}}
     """
     results = {}
     for name, chunker in chunkers.items():
-        retrieval_index = build_retrieval_index(notes_root, vector_store, chunker)
-        result = compare_retrieval_modes(retrieval_index, golden_qa_path, k_values, modes)
+        retrieval_index = build_retrieval_index(
+            notes_root=notes_root,
+            vector_store=vector_store,
+            chunker=chunker
+        )
+        result = compare_retrieval_modes(
+            retrieval_index=retrieval_index,
+            golden_qa_path=golden_qa_path,
+            k_values=k_values,
+            modes=modes,
+            level=level
+        )
         results[name] = result
 
     return results
@@ -104,7 +116,8 @@ def main() -> None:
         EVAL_CORPUS_PATH,
         vector_s,
         GOLDEN_QA_PATH,
-        chunker_st
+        chunker_st,
+        level="chunk"
     )
     print(format_comparison_table(comparison_results))
 
