@@ -46,6 +46,7 @@ python week-02/hello_llm.py
 | Week 13 | RAG: Evaluation — retrieval metrics (recall@k/MRR), LLM-as-judge, HTML report           | Done   |
 | Week 14 | Consolidate #2 — rebuild from memory, swappable-interface Protocols + adapters          | Done   |
 | Week 15 | RAG comparison — Protocols wired, frozen eval corpus, chunking & retrieval-mode comparison | Done   |
+| Week 16 | Chunk-level retrieval evaluation, 48-question golden set + validator, Phase 3 retro      | Done   |
 
 ## What I Learned
 ### Week 01
@@ -163,3 +164,11 @@ python week-02/hello_llm.py
 - Ran a chunking comparison and found the metric itself was biased: document-level relevance rewards strategies that cut the relevant document into more chunks
 - Found and fixed two retrieval bugs the professional way — measure, fix, test, measure again: RRF ties decided by set order (hybrid results changed between runs) and BM25 padding its results with zero-score chunks
 - Learned to read small evaluation sets honestly: convert differences into questions, and only trust an effect that points the same way across several cutoffs
+
+### Week 16
+- Made the evaluation measure the right thing: a hit now means the chunk that actually holds the answer (a short `answer_key` per golden question), not just any chunk from the right document — document-level scoring had overstated hybrid MRR (0.719 vs 0.509 at chunk level)
+- Grew the golden set from 13 to 48 questions over 25 documents, guarded by a validator that fails fast on broken ground truth instead of silently scoring it as a retrieval miss
+- Learned to read the metrics properly: recall@k is the share of questions with a hit in the top k; MRR also rewards how high the hit is, and must be read together with recall at the largest k, because misses score 0
+- Found that the embedding model reads only the first 256 tokens of a chunk and silently drops the rest — answers deep inside long chunks are invisible to vector search (MRR 0.27 vs 0.56)
+- Learned that BM25's strength on this set comes mostly from questions that copy the notes' wording (MRR 0.60 lexical vs 0.27 paraphrased), which is why hybrid stays the default
+- Closed Phase 3 with a retro and a Phase 4 plan: chunk-size fix and reranker first, then agents (bare API, then LangGraph), FastAPI, Docker and Azure

@@ -32,6 +32,11 @@ Week 15 wires those interfaces into the real pipeline and uses them to measure:
 a frozen evaluation corpus, a chunking-strategy comparison, two retrieval fixes
 that made the evaluation reproducible, and a retrieval-mode comparison.
 
+Week 16 makes the evaluation measure the right thing: relevance at chunk level
+(the chunk that holds the answer, not just the right document), a golden set
+grown to 48 questions with a validator, and a fair re-measurement of chunkers
+and retrieval modes on it.
+
 ## Setup
 
 From inside `rag-notes-qa/`, using the shared `ai-study/.venv`:  
@@ -93,7 +98,14 @@ package itself never reads paths or environment variables — callers pass them 
 - `src/rag_notes/citations.py` — turns search results into structured, numbered
   citations (`build_source_label`, `build_citations`, `format_citations`)
 - `src/rag_notes/retrieval_metrics.py` — pure retrieval-quality metrics
-  (`recall_at_k`, `reciprocal_rank`, `mean_reciprocal_rank`)
+  (`recall_at_k`, `reciprocal_rank`, `mean_reciprocal_rank`) and chunk-level
+  relevance: `normalize_text()` (lowercase + collapsed whitespace) and
+  `find_relevant_chunk_ids(chunks, answer_key)` (ids of the chunks whose
+  normalized text contains the normalized key)
+- `src/rag_notes/golden_qa.py` — `validate_golden_entries(entries, chunks)`:
+  checks every golden entry (required fields, unique id, key inside the
+  expected answer, at most 30 words, matches a chunk of its own source
+  document) and returns a list of `"<id>: problem"` messages, empty when valid
 - `src/rag_notes/llm_judge.py` — LLM-as-judge faithfulness scoring
   (`build_judge_prompt`, `clean_result`, `normalize_score`, `judge_answer`)
 - `src/rag_notes/eval_report.py` — builds the self-contained HTML eval report
@@ -104,12 +116,15 @@ package itself never reads paths or environment variables — callers pass them 
 - `verify/` — manual, live end-to-end smoke tests against a real Ollama model and
   a real Chroma index (`verify_generate.py`, `verify_citations.py`,
   `verify_retrieval.py`, `verify_guardrail.py`, `verify_retrieval_eval.py`,
-  `verify_chunking_eval.py`, `verify_llm_judge.py`, `verify_full_eval.py`) —
+  `verify_chunking_eval.py`, `verify_llm_judge.py`, `verify_full_eval.py`,
+  `verify_golden_qa.py`) —
   distinct from `tests/`, which is fast and dependency-free. The evaluation
   scripts (`*_eval.py`, `verify_llm_judge.py`) build from the frozen corpus; the
   demo scripts build from the live notes under `NOTES_ROOT`
-- `data/golden_qa.json` — hand-labeled (question, source document, verbatim answer
-  span) reference set, chunker-agnostic and retrieval-mode-agnostic by design
+- `data/golden_qa.json` — 48 hand-reviewed questions over 25 documents: question,
+  source document, verbatim expected answer and a short `answer_key` (5–30 words
+  copied from the answer) used for chunk-level relevance; `notes` tag each
+  question as lexical (copies the notes' wording) or paraphrase
 - `data/eval_corpus/` — frozen evaluation corpus: Weeks 01–14 takeaway notes plus
   the Comprehensive Notes as of 2026-10-07 (71 documents). The `.docx` files are
   gitignored; `MANIFEST.txt` lists them. Refreshed only deliberately, together
@@ -122,8 +137,9 @@ package itself never reads paths or environment variables — callers pass them 
   `build_full_eval_html()` (`test_eval_report.py`), `answer_question()` with fake
   retriever/provider (`test_generate.py`), `hybrid_search()` in all three modes
   with a fake vector store, RRF tie-breaking and zero-score filtering
-  (`test_hybrid_search.py`, `test_bm25_index.py`), and the chunking-comparison
-  table (`test_chunking_eval.py`)
+  (`test_hybrid_search.py`, `test_bm25_index.py`), the chunking-comparison
+  table (`test_chunking_eval.py`), and the golden-set validator
+  (`test_golden_qa.py`)
 - `compare_chunkers.py` — runs both chunkers over one document and prints their
   output side by side
 - `main.py` — loads the full corpus and structure-chunks every document
@@ -141,8 +157,9 @@ of scope for now.
 pytest # run the test suite
 python compare_chunkers.py # compare structure-aware vs. fixed-size chunking on one doc
 python main.py # structure-chunk the whole corpus
-python -m verify.verify_retrieval_eval   # recall@k / MRR for all three modes (frozen corpus)
-python -m verify.verify_chunking_eval    # structure-aware vs. fixed-size chunking (frozen corpus)
+python -m verify.verify_golden_qa        # validate golden_qa.json against the frozen corpus
+python -m verify.verify_retrieval_eval   # recall@k / MRR for all three modes (frozen corpus, document level)
+python -m verify.verify_chunking_eval    # structure-aware vs. fixed-size chunking (frozen corpus, chunk level)
 python ask.py --question "What is RRF?"  # end-to-end answer over the live notes
 ```
 
@@ -210,3 +227,43 @@ Measurement work on the frozen corpus (StructureChunker, 13 golden questions):
 
 Tagged `v0.15.0` (MINOR: new capability plus breaking signature changes, which
 bump MINOR while the version is below 1.0.0).
+
+Week 16 made relevance chunk-level. `run_retrieval_eval()` and the two compare
+functions take `level="document" | "chunk"`: at chunk level a hit is a chunk
+whose text contains the question's `answer_key`, and a key that matches no
+chunk stops the run with a `ValueError` naming the question (broken ground
+truth must not be scored as a retrieval miss). The golden set grew from 13 to
+48 questions over 25 documents, guarded by `validate_golden_entries()`.
+
+New baseline (frozen corpus, StructureChunker, 48 questions, two identical runs):
+
+| Mode   | Level    | recall@1 | recall@3 | recall@5 | MRR   |
+|--------|----------|----------|----------|----------|-------|
+| hybrid | chunk    | 0.38     | 0.67     | 0.69     | 0.509 |
+| vector | chunk    | 0.42     | 0.54     | 0.67     | 0.501 |
+| bm25   | chunk    | 0.35     | 0.42     | 0.52     | 0.399 |
+| hybrid | document | 0.65     | 0.81     | 0.81     | 0.719 |
+| vector | document | 0.62     | 0.69     | 0.83     | 0.682 |
+| bm25   | document | 0.52     | 0.65     | 0.79     | 0.600 |
+
+What the 48-question set shows:
+
+- Document level overstated retrieval on about 13 of 48 questions; chunk level
+  is the number to report from now on.
+- Hybrid and vector are close; both are ahead of BM25 by about 5 questions.
+- Structure vs fixed-size chunking at chunk level (MRR): hybrid 0.51 vs 0.44,
+  vector 0.50 vs 0.32, bm25 0.40 vs 0.52 — fixed-size is not better overall;
+  it depends on the mode.
+- The embedding model (all-MiniLM-L6-v2) reads at most 256 WordPiece tokens
+  per chunk and silently drops the rest. When the answer sits beyond the first
+  ~1,000 characters of its chunk, vector MRR falls to 0.27 (0.56 otherwise);
+  BM25 is unaffected. Next step: split long sections to about 200 tokens.
+- BM25's strength comes mostly from questions that copy the notes' wording
+  (MRR 0.60 lexical vs 0.27 paraphrase); hybrid is reasonable on both, so it
+  stays the default.
+- Embeddings are bit-identical within and across processes, so the residual
+  hybrid swing does not come from embedding floats; Chroma's approximate HNSW
+  index is the remaining suspect (not seen in four 48-question runs).
+
+Tagged `v0.16.0` (MINOR: new capability — chunk-level relevance and the
+golden-set validator).

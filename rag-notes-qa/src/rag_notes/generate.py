@@ -110,9 +110,9 @@ def answer_question(
         and the citations backing it — citations empty when the
         guardrail fired before generation.
     """
-    results = retriever.search(question, n=n)
+    search_results = retriever.search(question, n=n)
     try:
-        context = build_context(results)
+        context = build_context(search_results)
     except ValueError:
         return AnsweredQuery(
             query=question,
@@ -120,9 +120,9 @@ def answer_question(
             citations=[],
         )
 
-    result = generate_answer(question, context, provider)
-    answer = normalize_answer(result.text)
-    citations = build_citations(results)
+    llm_result = generate_answer(question, context, provider)
+    answer = normalize_answer(llm_result.text)
+    citations = build_citations(search_results)
     return AnsweredQuery(
         query=question,
         answer=answer,
