@@ -28,6 +28,30 @@ def embed_chunks(chunks: list[Chunk], model: SentenceTransformer) -> list[Embedd
     return [EmbeddedChunk(chunk, vector.tolist()) for chunk, vector in zip(chunks, vectors)]
 
 
+def count_wordpiece_tokens(text: str, tokenizer) -> int:
+    """Count the WordPiece pieces of one text, without special tokens.
+
+    Args:
+        text: any string
+        tokenizer: the embedder's tokenizer (model.tokenizer)
+    Returns:
+        number of pieces, e.g. 'embeddings' -> 4
+    """
+    return len(tokenizer.tokenize(text))
+
+
+def wordpiece_counts(chunks: list[Chunk], tokenizer) -> list[int]:
+    """Count the WordPiece pieces of every chunk text.
+
+    Args:
+        chunks: chunks from any chunker
+        tokenizer: the embedder's tokenizer
+    Returns:
+        one count per chunk, same order and length as chunks
+    """
+    return [count_wordpiece_tokens(chunk.text, tokenizer) for chunk in chunks]
+
+
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     """Return the cosine similarity between two equal-length vectors,
     from -1.0 (opposite direction) to 1.0 (identical direction).
