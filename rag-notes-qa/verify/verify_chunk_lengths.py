@@ -1,10 +1,10 @@
 from pathlib import Path
 
 from config import EVAL_CORPUS_PATH
-from rag_notes.adapters import StructureChunker
+from rag_notes.adapters import StructureChunker, StructureThenSizeChunker
 from rag_notes.embedder import wordpiece_counts, load_embedding_model
-from rag_notes.loader import load_corpus
 from rag_notes.protocols import Chunker
+from rag_notes.retrieval import collect_chunks
 
 
 def collect_chunk_counts(
@@ -21,10 +21,7 @@ def collect_chunk_counts(
     Returns:
         one count per chunk, all documents together, in document order
     """
-    source_documents = load_corpus(corpus_path)
-    chunks = []
-    for document in source_documents:
-        chunks.extend(chunker.chunk(document))
+    chunks = collect_chunks(corpus_path, chunker)
     return wordpiece_counts(chunks, tokenizer)
 
 
@@ -56,20 +53,20 @@ def bucket_counts(
 def main():
     model = load_embedding_model()
     tokenizer = model.tokenizer
+    limit = model.max_seq_length - 2
 
     chunk_counts = collect_chunk_counts(
         corpus_path=EVAL_CORPUS_PATH,
-        chunker=StructureChunker(),
+        chunker=StructureThenSizeChunker(tokenizer, limit),
         tokenizer=tokenizer
     )
 
-    limit = model.max_seq_length - 2
     edges = [128, limit, 512]
 
     counts = bucket_counts(chunk_counts, edges)
     print(f"chunks: {len(chunk_counts)} over {limit}: {sum(1 for c in chunk_counts if c > limit)}"
           f"\nlargest: {max(chunk_counts)}"
-          f"\n<=128: {counts[0]}\t\t129-{limit}: {counts[1]}\t\t{limit + 1}-512: {counts[2]}\t\t>512: {counts[3]}")
+          f"\n<=128: {counts[0]:<7} 129-{limit}: {counts[1]:<7} {limit + 1}-512: {counts[2]:<7} >512: {counts[3]}")
 
 
 if __name__ == "__main__":

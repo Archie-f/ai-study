@@ -9,6 +9,19 @@ from rag_notes.protocols import Chunker, VectorStore
 from rag_notes.hybrid_search import hybrid_search
 
 
+def collect_chunks(corpus_path: Path, chunker: Chunker) -> list[Chunk]:
+    """Chunk every document in the corpus.
+
+    Args:
+        corpus_path: root folder of the corpus (e.g. EVAL_CORPUS_PATH)
+        chunker: any Chunker (e.g. StructureChunker())
+    Returns:
+        list of Chunk objects
+    """
+    source_documents = load_corpus(corpus_path)
+    return [chunk for document in source_documents for chunk in chunker.chunk(document)]
+
+
 def build_retrieval_index(
         notes_root: Path,
         vector_store: VectorStore,
@@ -29,11 +42,7 @@ def build_retrieval_index(
     """
     model = load_embedding_model()
 
-    documents = load_corpus(notes_root)
-    chunks = []
-    for document in documents:
-        document_chunks = chunker.chunk(document)
-        chunks.extend(document_chunks)
+    chunks = collect_chunks(notes_root, chunker)
     embedded_chunks = embed_chunks(chunks, model)
     vector_store.reset()
     vector_store.add(embedded_chunks)

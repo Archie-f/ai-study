@@ -3,10 +3,12 @@ from typing import Literal
 from chromadb import QueryResult
 from sentence_transformers import SentenceTransformer
 
-from rag_notes.fixed_chunker import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP, chunk_fixed_size, chunk_fixed_size_document
+from rag_notes.fixed_chunker import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP, chunk_fixed_size, chunk_fixed_size_document, \
+    SAFE_CHUNK_SIZE
 from rag_notes.models import SourceDocument, Chunk, EmbeddedChunk, RetrievalIndex
 from rag_notes.retrieval import search
 from rag_notes.structure_chunker import BOUNDARY_STYLES, chunk_document
+from rag_notes.structure_then_size_chunker import chunk_document_structure_then_size
 from rag_notes.vector_store import COLLECTION_NAME, get_collection, add_chunks, get_query_result, delete_collection
 
 
@@ -44,6 +46,40 @@ class FixedSizeChunker:
         return chunk_fixed_size_document(
             chunk_texts,
             document.metadata
+        )
+
+
+class StructureThenSizeChunker:
+    def __init__(
+            self,
+            tokenizer,
+            limit: int,
+            boundary_styles: set[str] = BOUNDARY_STYLES,
+            n: int = SAFE_CHUNK_SIZE,
+            o: int = DEFAULT_OVERLAP,
+    ):
+        self.tokenizer = tokenizer
+        self.limit = limit
+        self.boundary_styles = boundary_styles
+        self.n = n
+        self.o = o
+
+    def chunk(self, document: SourceDocument) -> list[Chunk]:
+        """Chunk a document by using structure chunking first and then re-chunk the chunks that have
+        number of WordPiece tokens over the given limit.
+
+        Args:
+            document (SourceDocument): The document to chunk.
+        Returns:
+            list[Chunk]: A list of Chunks.
+        """
+        return chunk_document_structure_then_size(
+            document=document,
+            tokenizer=self.tokenizer,
+            limit=self.limit,
+            boundary_styles=self.boundary_styles,
+            n=self.n,
+            o=self.o
         )
 
 
