@@ -1,7 +1,7 @@
 from dataclasses import replace
 
 from rag_notes.embedder import count_wordpiece_tokens
-from rag_notes.fixed_chunker import SAFE_CHUNK_SIZE, DEFAULT_OVERLAP, chunk_fixed_size, chunk_fixed_size_document
+from rag_notes.fixed_chunker import SAFE_CHUNK_SIZE, DEFAULT_OVERLAP, chunk_text_fixed_size, chunk_fixed_size_document
 from rag_notes.models import SourceDocument, Chunk
 from rag_notes.structure_chunker import BOUNDARY_STYLES, chunk_document
 
@@ -36,7 +36,7 @@ def chunk_document_structure_then_size(
         if wordpiece_count <= limit:
             final_chunks_list.append(chunk)
         else:
-            fixed_size_split_texts = chunk_fixed_size(chunk.text, n=n, o=o)
+            fixed_size_split_texts = chunk_text_fixed_size(chunk.text, n=n, o=o)
             sub_chunks = chunk_fixed_size_document(
                 fixed_size_split_texts,
                 chunk.source,

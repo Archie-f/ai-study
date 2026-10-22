@@ -11,7 +11,7 @@ DEFAULT_OVERLAP = 50
 encoding = tiktoken.get_encoding("cl100k_base")
 
 
-def chunk_fixed_size(text: str, n: int, o: int) -> list[str]:
+def chunk_text_fixed_size(text: str, n: int, o: int) -> list[str]:
     """Split text into fixed-size, overlapping chunk texts by token count.
         Arguments:
             text: text to split

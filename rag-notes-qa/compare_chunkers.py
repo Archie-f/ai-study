@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 from rag_notes.loader import DocumentMetadata, SourceDocument, iter_paragraphs, parse_week_day
 from rag_notes.structure_chunker import BOUNDARY_STYLES, chunk_document
-from rag_notes.fixed_chunker import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP, encoding, chunk_fixed_size, chunk_fixed_size_document
+from rag_notes.fixed_chunker import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP, encoding, chunk_text_fixed_size, chunk_fixed_size_document
 
 load_dotenv()
 notes_root = os.getenv("NOTES_ROOT")
@@ -29,7 +29,7 @@ structure_aware_chunks = chunk_document(source_document, BOUNDARY_STYLES)
 # Chunking the document by using structure aware method
 document_text = "\n".join(paragraph[0] for paragraph in source_document.paragraphs)
 
-chunked_texts = chunk_fixed_size(
+chunked_texts = chunk_text_fixed_size(
     document_text,
     DEFAULT_CHUNK_SIZE,
     DEFAULT_OVERLAP

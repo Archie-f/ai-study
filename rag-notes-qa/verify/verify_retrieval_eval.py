@@ -110,12 +110,11 @@ def compare_retrieval_modes(
 def main():
     vector_store = ChromaVectorStore(PERSIST_PATH)
     index = build_retrieval_index(EVAL_CORPUS_PATH, vector_store, StructureChunker())
-    report = run_retrieval_eval(index, GOLDEN_QA_PATH)
+    report = run_retrieval_eval(index, GOLDEN_QA_PATH, level="chunk")
     print(report)
     print("-" * 20)
-    reports = compare_retrieval_modes(index, GOLDEN_QA_PATH, modes=mode_list)
+    reports = compare_retrieval_modes(index, GOLDEN_QA_PATH, modes=mode_list, level="chunk")
     print(reports)
-
 
 
 if __name__ == "__main__":

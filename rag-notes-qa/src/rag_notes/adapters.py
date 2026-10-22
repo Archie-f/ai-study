@@ -3,7 +3,7 @@ from typing import Literal
 from chromadb import QueryResult
 from sentence_transformers import SentenceTransformer
 
-from rag_notes.fixed_chunker import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP, chunk_fixed_size, chunk_fixed_size_document, \
+from rag_notes.fixed_chunker import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP, chunk_text_fixed_size, chunk_fixed_size_document, \
     SAFE_CHUNK_SIZE
 from rag_notes.models import SourceDocument, Chunk, EmbeddedChunk, RetrievalIndex
 from rag_notes.retrieval import search
@@ -42,7 +42,7 @@ class FixedSizeChunker:
         """
         paragraph_texts = [paragraph[0] for paragraph in document.paragraphs]
         doc_text = "\n".join(paragraph_texts)
-        chunk_texts = chunk_fixed_size(doc_text, self.n, self.o)
+        chunk_texts = chunk_text_fixed_size(doc_text, self.n, self.o)
         return chunk_fixed_size_document(
             chunk_texts,
             document.metadata

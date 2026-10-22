@@ -2,7 +2,8 @@ from pathlib import Path
 from typing import Literal
 
 from config import PERSIST_PATH, EVAL_CORPUS_PATH, GOLDEN_QA_PATH
-from rag_notes.adapters import ChromaVectorStore, StructureChunker, FixedSizeChunker
+from rag_notes.adapters import ChromaVectorStore, StructureChunker, FixedSizeChunker, StructureThenSizeChunker
+from rag_notes.embedder import load_embedding_model
 from rag_notes.models import RetrievalEvalReport
 from rag_notes.protocols import VectorStore, Chunker
 from rag_notes.retrieval import build_retrieval_index
@@ -110,7 +111,16 @@ def main() -> None:
     retrieval modes, and prints format_comparison_table() of the results.
     """
     vector_s = ChromaVectorStore(PERSIST_PATH)
-    chunker_st = {"structure": StructureChunker(), "fixed": FixedSizeChunker()}
+    model = load_embedding_model()
+    limit = model.max_seq_length - 2
+    chunker_st = {
+        "structure": StructureChunker(),
+        "fixed": FixedSizeChunker(),
+        "struct+sz": StructureThenSizeChunker(
+            tokenizer=model.tokenizer,
+            limit=limit
+        )
+    }
 
     comparison_results = compare_chunking_strategies(
         EVAL_CORPUS_PATH,
