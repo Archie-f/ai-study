@@ -5,7 +5,7 @@ from rag_notes.bm25_index import build_bm25_index
 from rag_notes.embedder import load_embedding_model, embed_chunks
 from rag_notes.loader import load_corpus
 from rag_notes.models import RetrievalIndex, Chunk
-from rag_notes.protocols import Chunker, VectorStore
+from rag_notes.protocols import Chunker, VectorStore, Reranker
 from rag_notes.hybrid_search import hybrid_search
 
 
@@ -79,4 +79,37 @@ def search(
         bm25_index=retrieval_index.bm25_index,
         n=n,
         mode=mode
+    )
+
+
+def search_with_rerank(
+        retrieval_index: RetrievalIndex,
+        reranker: Reranker,
+        query: str,
+        n_candidates: int = 20,
+        top_k: int = 5,
+        mode: Literal["hybrid", "vector", "bm25"] = "hybrid"
+) -> list[tuple[str, float, Chunk]]:
+    """Two-stage search: fetch a wide candidate list, then rerank it.
+
+    Args:
+        retrieval_index: a RetrievalIndex from build_retrieval_index()
+        reranker: any Reranker (e.g. CrossEncoderReranker)
+        query: raw query string
+        n_candidates: how many candidates the first stage fetches
+        top_k: how many results to keep after reranking
+        mode: first-stage retrieval mode, forwarded to search()
+    Returns:
+        up to top_k (chunk_id, reranker_score, chunk) tuples, highest score first
+    """
+    candidates = search(
+        retrieval_index=retrieval_index,
+        query=query,
+        n=n_candidates,
+        mode=mode
+    )
+    return reranker.rerank(
+        query=query,
+        candidates=candidates,
+        top_k=top_k
     )
