@@ -6,6 +6,7 @@ from sentence_transformers import SentenceTransformer
 from rag_notes.fixed_chunker import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP, chunk_text_fixed_size, chunk_fixed_size_document, \
     SAFE_CHUNK_SIZE
 from rag_notes.models import SourceDocument, Chunk, EmbeddedChunk, RetrievalIndex
+from rag_notes.reranker import pick_top_by_score
 from rag_notes.retrieval import search
 from rag_notes.structure_chunker import BOUNDARY_STYLES, chunk_document
 from rag_notes.structure_then_size_chunker import chunk_document_structure_then_size
@@ -150,3 +151,33 @@ class HybridRetriever:
             n,
             mode
         )
+
+
+class CrossEncoderReranker:
+    """Reranker backed by a cross-encoder model (anything with predict(pairs))."""
+
+    def __init__(self, model):
+        self.model = model
+
+    def rerank(
+            self,
+            query: str,
+            candidates: list[tuple[str, float, Chunk]],
+            top_k: int
+    ) -> list[tuple[str, float, Chunk]]:
+        """Re-score candidates with the cross-encoder and keep the best top_k.
+
+        Args:
+            query: the user's question
+            candidates: (chunk_id, old_score, chunk) tuples as returned by search()
+            top_k: how many results to keep
+        Returns:
+            up to top_k (chunk_id, reranker_score, chunk) tuples, highest score first
+        """
+        if not candidates:
+            return []
+
+        pairs = [(query, chunk.text) for _, _, chunk in candidates]
+        scores = [float(score) for score in self.model.predict(pairs)]
+
+        return pick_top_by_score(candidates, scores, top_k)
