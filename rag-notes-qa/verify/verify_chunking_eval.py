@@ -5,7 +5,7 @@ from config import PERSIST_PATH, EVAL_CORPUS_PATH, GOLDEN_QA_PATH
 from rag_notes.adapters import ChromaVectorStore, StructureChunker, FixedSizeChunker, StructureThenSizeChunker
 from rag_notes.embedder import load_embedding_model
 from rag_notes.models import RetrievalEvalReport
-from rag_notes.protocols import VectorStore, Chunker
+from rag_notes.protocols import VectorStore, Chunker, Reranker
 from rag_notes.retrieval import build_retrieval_index
 from verify.verify_retrieval_eval import compare_retrieval_modes
 
@@ -17,7 +17,8 @@ def compare_chunking_strategies(
     chunkers: dict[str, Chunker],
     k_values: list[int] | None = None,
     modes: list[Literal["hybrid", "vector", "bm25"]] | None = None,
-    level: Literal["document", "chunk"] = "document"
+    level: Literal["document", "chunk"] = "document",
+    reranker: Reranker | None = None
 ) -> dict[str, dict[str, RetrievalEvalReport]]:
     """Evaluate several chunking strategies on the same corpus and questions.
 
@@ -33,6 +34,7 @@ def compare_chunking_strategies(
         k_values: which recall@k cutoffs to report
         modes: which retrieval modes to compare
         level: forwarded to compare_retrieval_modes()
+        reranker: optional Reranker; if given, results come from search_with_rerank()
     Returns:
         {strategy name: {mode name: RetrievalEvalReport}}
     """
@@ -48,7 +50,8 @@ def compare_chunking_strategies(
             golden_qa_path=golden_qa_path,
             k_values=k_values,
             modes=modes,
-            level=level
+            level=level,
+            reranker=reranker
         )
         results[name] = result
 
