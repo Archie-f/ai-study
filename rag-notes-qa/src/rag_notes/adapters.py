@@ -6,8 +6,9 @@ from sentence_transformers import SentenceTransformer
 from rag_notes.fixed_chunker import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP, chunk_text_fixed_size, chunk_fixed_size_document, \
     SAFE_CHUNK_SIZE
 from rag_notes.models import SourceDocument, Chunk, EmbeddedChunk, RetrievalIndex
-from rag_notes.reranker import pick_top_by_score
-from rag_notes.retrieval import search
+from rag_notes.protocols import Reranker
+from rag_notes.reranker import pick_top_by_score, drop_below_threshold
+from rag_notes.retrieval import search, search_with_rerank
 from rag_notes.structure_chunker import BOUNDARY_STYLES, chunk_document
 from rag_notes.structure_then_size_chunker import chunk_document_structure_then_size
 from rag_notes.vector_store import COLLECTION_NAME, get_collection, add_chunks, get_query_result, delete_collection
@@ -151,6 +152,46 @@ class HybridRetriever:
             n,
             mode
         )
+
+
+class RerankingRetriever:
+    def __init__(
+            self,
+            retrieval_index: RetrievalIndex,
+            reranker: Reranker,
+            min_score: float,
+            n_candidates: int = 20,
+    ):
+        self.retrieval_index = retrieval_index
+        self.reranker = reranker
+        self.min_score = min_score
+        self.n_candidates = n_candidates
+
+    def search(
+            self,
+            query: str,
+            n: int = 3,
+            mode: Literal["hybrid", "vector", "bm25"] = "hybrid",
+    ) -> list[tuple[str, float, Chunk]]:
+        """Search, rerank the candidates and drop results below min_score.
+
+        Args:
+            query: The query to search for.
+            n: How many reranked results to keep before the threshold is applied.
+            mode: First-stage search mode (hybrid, vector, bm25).
+        Returns:
+            up to n (chunk_id, rerank_score, chunk) tuples, the best first, all with
+            score >= min_score; empty if none qualifies
+        """
+        results = search_with_rerank(
+            retrieval_index=self.retrieval_index,
+            reranker=self.reranker,
+            query=query,
+            n_candidates=self.n_candidates,
+            top_k=n,
+            mode=mode,
+        )
+        return drop_below_threshold(results, self.min_score)
 
 
 class CrossEncoderReranker:

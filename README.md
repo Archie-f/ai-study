@@ -47,6 +47,7 @@ python week-02/hello_llm.py
 | Week 14 | Consolidate #2 — rebuild from memory, swappable-interface Protocols + adapters          | Done   |
 | Week 15 | RAG comparison — Protocols wired, frozen eval corpus, chunking & retrieval-mode comparison | Done   |
 | Week 16 | Chunk-level retrieval evaluation, 48-question golden set + validator, Phase 3 retro      | Done   |
+| Week 17 | RAG hardening — token-window-safe chunker, cross-encoder reranker, relevance threshold   | Done   |
 
 ## What I Learned
 ### Week 01
@@ -172,3 +173,12 @@ python week-02/hello_llm.py
 - Found that the embedding model reads only the first 256 tokens of a chunk and silently drops the rest — answers deep inside long chunks are invisible to vector search (MRR 0.27 vs 0.56)
 - Learned that BM25's strength on this set comes mostly from questions that copy the notes' wording (MRR 0.60 lexical vs 0.27 paraphrased), which is why hybrid stays the default
 - Closed Phase 3 with a retro and a Phase 4 plan: chunk-size fix and reranker first, then agents (bare API, then LangGraph), FastAPI, Docker and Azure
+
+### Week 17
+- Measured before changing: 129 of 950 chunks were longer than the embedding model's window, so the fix targeted only those and the chunk size came from a measured token ratio, not a guess
+- Tested the new chunker with a fake tokenizer and checked every test by breaking the code on purpose — a test that cannot fail proves nothing
+- Added a cross-encoder reranker behind a Protocol; MRR rose 0.54 -> 0.63 (hybrid), but recall@5 stayed put, which showed that a reranker can only reorder what the first stage found
+- Tried 50 candidates instead of 20 and kept 20: more candidates did not help, so the cheaper setting won
+- Calibrated the relevance threshold on all 48 questions, not on the 8 I had looked at first; the first sample's minimum (2.56) would have thrown away about a quarter of the answerable questions
+- Learned that tables are comparable only if they use the same cutoffs: changing `k_values` changed how many results were fetched and silently changed hybrid's order
+- The full eval now reads: judge pass rate 77% (37/48); 10 of the 11 failures are "I don't know", mostly paraphrased questions whose right chunk never reached the reranker — the next problem to solve

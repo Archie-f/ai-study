@@ -4,11 +4,11 @@ from pathlib import Path
 from config import get_notes_root, PERSIST_PATH
 from llm_compare.providers.base import LLMProvider
 from llm_compare.providers.ollama_provider import OllamaProvider
-from rag_notes.adapters import StructureChunker, HybridRetriever, ChromaVectorStore
+from llm_compare.providers.openai_provider import OpenAIProvider
+from rag_notes.adapters import ChromaVectorStore
 from rag_notes.generate import answer_question, GUARDRAIL_ANSWER
-from rag_notes.models import RetrievalIndex
+from rag_notes.pipeline import build_default_retriever
 from rag_notes.protocols import Retriever
-from rag_notes.retrieval import build_retrieval_index
 
 
 @dataclass
@@ -107,9 +107,8 @@ def main() -> None:
     """Main function."""
     notes_root: Path = get_notes_root()
     vector_store = ChromaVectorStore(PERSIST_PATH)
-    index: RetrievalIndex = build_retrieval_index(notes_root, vector_store, StructureChunker())
-    retriever = HybridRetriever(index)
-    provider: LLMProvider = OllamaProvider(temperature=0)
+    retriever = build_default_retriever(notes_root, vector_store)
+    provider: LLMProvider = OpenAIProvider()
     cases: list[GuardrailCase] = build_test_cases()
 
     guardrail_results: list[GuardrailResult] = [run_case(retriever, case, provider) for case in cases]

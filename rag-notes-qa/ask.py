@@ -2,9 +2,9 @@ import argparse
 
 from config import get_notes_root, PERSIST_PATH
 from llm_compare.providers.openai_provider import OpenAIProvider
-from rag_notes.adapters import StructureChunker, HybridRetriever, ChromaVectorStore
+from rag_notes.adapters import ChromaVectorStore
 from rag_notes.generate import answer_question
-from rag_notes.retrieval import build_retrieval_index
+from rag_notes.pipeline import build_default_retriever
 
 
 notes_root = get_notes_root()
@@ -22,8 +22,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 vector_store = ChromaVectorStore(PERSIST_PATH)
-index = build_retrieval_index(notes_root, vector_store, StructureChunker())
-retriever = HybridRetriever(index)
+retriever = build_default_retriever(notes_root, vector_store)
 provider = OpenAIProvider()
 answer_query = answer_question(
     retriever=retriever,

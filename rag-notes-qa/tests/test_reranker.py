@@ -5,7 +5,7 @@ import pytest
 
 from rag_notes.adapters import CrossEncoderReranker
 from rag_notes.models import DocumentMetadata, Chunk
-from rag_notes.reranker import pick_top_by_score
+from rag_notes.reranker import pick_top_by_score, drop_below_threshold
 
 _metadata = DocumentMetadata(week=12, day=1, file_path=Path("fake.docx"), title="fake")
 chunk_one = Chunk(text="First chunk's text.", source=_metadata, heading="A", chunk_index=0)
@@ -126,3 +126,20 @@ def test_rerank_with_no_candidates_does_not_call_the_model():
 
     assert result == []
     assert model.received_pairs is None
+
+
+def test_result_with_exactly_min_score_is_kept():
+    """A result whose score equals min_score stays (>=, not >)."""
+    results = drop_below_threshold(candidates_list, min_score=0.41297)
+    assert [r[0] for r in results] == ["a", "b"]
+
+
+def test_results_below_min_score_are_dropped_and_order_is_kept():
+    """Lower scores go, the rest keep their order."""
+    results = drop_below_threshold(candidates_list, min_score=0.4)
+    assert results == [candidates_list[0], candidates_list[1]]
+
+
+def test_everything_below_min_score_gives_empty_list():
+    """No result qualifies -> empty list, no error."""
+    assert drop_below_threshold(candidates_list, min_score=10.0) == []

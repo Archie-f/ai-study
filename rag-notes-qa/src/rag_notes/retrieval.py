@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Literal
 
+from sentence_transformers import SentenceTransformer
+
 from rag_notes.bm25_index import build_bm25_index
 from rag_notes.embedder import load_embedding_model, embed_chunks
 from rag_notes.loader import load_corpus
@@ -25,7 +27,8 @@ def collect_chunks(corpus_path: Path, chunker: Chunker) -> list[Chunk]:
 def build_retrieval_index(
         notes_root: Path,
         vector_store: VectorStore,
-        chunker: Chunker
+        chunker: Chunker,
+        model: SentenceTransformer | None = None,
 ) -> RetrievalIndex:
     """Load, chunk, embed, and index an entire notes corpus, ready for search().
     The vector store is emptied first, so calling this twice with the same
@@ -36,11 +39,12 @@ def build_retrieval_index(
         vector_store: a VectorStore Protocol object that receives the embedded chunks
         chunker: any object satisfying the Chunker Protocol. Decides how
             each document will be split into chunks
+        model: already loaded embedding model to reuse; loaded here if None
     Returns:
         a RetrievalIndex bundling the populated vector store, the loaded
         embedding model, and the built BM25 index
     """
-    model = load_embedding_model()
+    model = model or load_embedding_model()
 
     chunks = collect_chunks(notes_root, chunker)
     embedded_chunks = embed_chunks(chunks, model)

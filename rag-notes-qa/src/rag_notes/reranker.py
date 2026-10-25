@@ -25,3 +25,18 @@ def pick_top_by_score(
     sorted_list = sorted(new_candidates_list, key=lambda x: x[1], reverse=True)
 
     return sorted_list[:top_k]
+
+
+def drop_below_threshold(
+        results: list[tuple[str, float, Chunk]],
+        min_score: float
+) -> list[tuple[str, float, Chunk]]:
+    """Drop results whose score is below min_score.
+
+    Args:
+        results: (chunk_id, score, chunk) tuples, e.g. from rerank()
+        min_score: lowest accepted score; a result with exactly this score is kept
+    Returns:
+        the kept results in their original order; empty if none qualifies
+    """
+    return [result for result in results if result[1] >= min_score]
