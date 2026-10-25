@@ -3,13 +3,15 @@ import tiktoken
 from rag_notes.models import Chunk
 from rag_notes.models import DocumentMetadata
 
+# Safe chunk size for all-MiniLM-L6-v2: 254 usable WordPiece tokens / 1.56 (max WordPiece-to-tiktoken ratio measured over all chunks)
+SAFE_CHUNK_SIZE = 162
 DEFAULT_CHUNK_SIZE = 500
 DEFAULT_OVERLAP = 50
 
 encoding = tiktoken.get_encoding("cl100k_base")
 
 
-def chunk_fixed_size(text: str, n: int, o: int) -> list[str]:
+def chunk_text_fixed_size(text: str, n: int, o: int) -> list[str]:
     """Split text into fixed-size, overlapping chunk texts by token count.
         Arguments:
             text: text to split

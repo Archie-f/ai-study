@@ -37,6 +37,10 @@ Week 16 makes the evaluation measure the right thing: relevance at chunk level
 grown to 48 questions with a validator, and a fair re-measurement of chunkers
 and retrieval modes on it.
 
+Week 17 hardens retrieval: a chunker that respects the embedding model's
+256-token window, a cross-encoder reranker, a relevance threshold in front of
+the guardrail, and one default pipeline that every real caller uses.
+
 ## Setup
 
 From inside `rag-notes-qa/`, using the shared `ai-study/.venv`:  
@@ -66,6 +70,11 @@ package itself never reads paths or environment variables — callers pass them 
   boundaries (`chunk_document`)
 - `src/rag_notes/fixed_chunker.py` — splits raw text into fixed-size, overlapping
   chunks by token count (`chunk_fixed_size`, `chunk_fixed_size_document`)
+- `src/rag_notes/structure_then_size_chunker.py` — structure-first chunking that
+  re-cuts only the sections longer than the embedding model's window
+  (`chunk_document_structure_then_size`): fixed pieces of `SAFE_CHUNK_SIZE`
+  (162 tiktoken tokens) with 50 tokens of overlap, heading kept, one continuous
+  `chunk_index`
 - `src/rag_notes/embedder.py` — loads a local sentence-transformers model and embeds
   chunks (`load_embedding_model`, `embed_chunks`)
 - `src/rag_notes/vector_store.py` — opens/creates, deletes, and populates a Chroma
@@ -81,15 +90,24 @@ package itself never reads paths or environment variables — callers pass them 
 - `src/rag_notes/retrieval.py` — the single entry point:
   `build_retrieval_index(notes_root, vector_store, chunker)` loads, chunks,
   embeds, and indexes the whole corpus with whatever `Chunker` and `VectorStore`
-  it is given (it empties the store first via `reset()`); `search()` runs a query
-  in `hybrid`, `vector`, or `bm25` mode
-- `src/rag_notes/protocols.py` — structural-typing interfaces for the three
+  it is given (it empties the store first via `reset()`, and can reuse an already
+  loaded embedding model); `search()` runs a query in `hybrid`, `vector`, or
+  `bm25` mode; `search_with_rerank()` fetches 20 candidates and lets a `Reranker`
+  pick the top k
+- `src/rag_notes/protocols.py` — structural-typing interfaces for the four
   pieces of the pipeline meant to be swappable: `Chunker`, `VectorStore`,
-  `Retriever`
+  `Retriever`, `Reranker`
 - `src/rag_notes/adapters.py` — concrete adapters implementing those protocols
-  (`StructureChunker`, `FixedSizeChunker`, `ChromaVectorStore`,
-  `HybridRetriever`), each a thin wrapper around an already-existing
+  (`StructureChunker`, `FixedSizeChunker`, `StructureThenSizeChunker`,
+  `ChromaVectorStore`, `HybridRetriever`, `CrossEncoderReranker`,
+  `RerankingRetriever`), each a thin wrapper around an already-existing
   function/module
+- `src/rag_notes/reranker.py` — pure reranking helpers: `pick_top_by_score`
+  (re-score candidates, keep the best `top_k`) and `drop_below_threshold`
+  (keep results with `score >= min_score`)
+- `src/rag_notes/pipeline.py` — the default production pipeline:
+  `make_default_chunker(model)` and `build_default_retriever(notes_root,
+  vector_store)`; every model is loaded once. `MIN_RERANK_SCORE = 0.0`
 - `src/rag_notes/generate.py` — assembles retrieved chunks into a labeled context
   (`build_context`), calls the LLM provider (`generate_answer`), enforces the
   guardrail against unsupported answers (`normalize_answer`), and runs the full
@@ -117,7 +135,8 @@ package itself never reads paths or environment variables — callers pass them 
   a real Chroma index (`verify_generate.py`, `verify_citations.py`,
   `verify_retrieval.py`, `verify_guardrail.py`, `verify_retrieval_eval.py`,
   `verify_chunking_eval.py`, `verify_llm_judge.py`, `verify_full_eval.py`,
-  `verify_golden_qa.py`) —
+  `verify_golden_qa.py`, `verify_rerank_eval.py`, `verify_rerank_scores.py`,
+  `verify_threshold_calibration.py`) —
   distinct from `tests/`, which is fast and dependency-free. The evaluation
   scripts (`*_eval.py`, `verify_llm_judge.py`) build from the frozen corpus; the
   demo scripts build from the live notes under `NOTES_ROOT`
@@ -160,6 +179,9 @@ python main.py # structure-chunk the whole corpus
 python -m verify.verify_golden_qa        # validate golden_qa.json against the frozen corpus
 python -m verify.verify_retrieval_eval   # recall@k / MRR for all three modes (frozen corpus, document level)
 python -m verify.verify_chunking_eval    # structure-aware vs. fixed-size chunking (frozen corpus, chunk level)
+python -m verify.verify_rerank_eval            # struct+sz baseline vs. with cross-encoder reranker (chunk level)
+python -m verify.verify_threshold_calibration  # reranker score of the right chunk for all 48 questions + threshold table
+python -m verify.verify_full_eval              # retrieval metrics + LLM judge for the default pipeline -> HTML report
 python ask.py --question "What is RRF?"  # end-to-end answer over the live notes
 ```
 
@@ -267,3 +289,38 @@ What the 48-question set shows:
 
 Tagged `v0.16.0` (MINOR: new capability — chunk-level relevance and the
 golden-set validator).
+
+Week 17 hardened retrieval, measured at chunk level on the frozen corpus
+(48 questions, two identical runs for every number).
+
+- Chunker: 129 of 950 structure chunks were longer than the embedding model's
+  256-token window and were silently truncated. `StructureThenSizeChunker`
+  re-cuts only those (pieces of 162 tiktoken tokens, overlap 50, chosen from the
+  measured WordPiece/tiktoken ratio); every golden `answer_key` still sits whole
+  in some chunk (`verify_golden_qa`: 1,912 chunks, 0 problems). MRR hybrid /
+  vector / bm25: 0.51 / 0.50 / 0.40 -> 0.54 / 0.58 / 0.44. The vector gain is
+  solid; the hybrid gain is weak evidence on 48 questions.
+- Reranker: first stage fetches 20 candidates, a cross-encoder
+  (`ms-marco-MiniLM-L-6-v2`) re-scores each (question, chunk) pair and the top 5
+  are kept. MRR 0.54 / 0.58 / 0.44 -> 0.63 / 0.64 / 0.59; recall@1 (hybrid)
+  0.38 -> 0.56; recall@5 barely moves because a reranker only reorders the
+  candidates it is given. 50 candidates instead of 20 gave no gain.
+- Threshold: results with a rerank score below 0.0 are dropped before
+  generation; if none is left the guardrail answers "I don't know". Calibrated
+  on the score of the right chunk for all 48 questions: 0.0 keeps the right
+  chunk in 33 of 35 questions where it was in the top 5 and lets 1 of 8
+  unanswerable test questions through (the language model's guardrail catches
+  it). A threshold of 2.0 would remove 8 answerable questions.
+- Default pipeline (`build_default_retriever`): new chunker + hybrid first stage
+  + reranker + threshold. `ask.py`, `verify_guardrail.py`, `verify_llm_judge.py`
+  and `verify_full_eval.py` use it. Guardrail suite 4/4. Full eval (chunk level,
+  48 questions): hybrid recall@1/3/5 = 0.56/0.69/0.73, MRR 0.63; judge pass rate
+  37/48 (77%). Of the 11 failures, 10 are "I don't know": 8 questions whose
+  right chunk never reached the 20 candidates (paraphrased questions) and 2
+  whose right chunk scored under the threshold. The earlier 7/13 judge result
+  was measured on the 13-question set and is not comparable.
+- Known limits: first-stage recall on paraphrased questions is now the biggest
+  loss; the model sometimes copies the `<label>` placeholder from the system
+  prompt into its citations.
+
+Tagged `v0.17.0` (MINOR: new capability — chunker, reranker, threshold).

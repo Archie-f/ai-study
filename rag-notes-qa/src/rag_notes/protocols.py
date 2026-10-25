@@ -28,10 +28,21 @@ class VectorStore(Protocol):
 
 class Retriever(Protocol):
     def search(
-        self,
-        query: str,
-        n: int = 3,
-        mode: Literal["hybrid", "vector", "bm25"] = "hybrid",
+            self,
+            query: str,
+            n: int = 3,
+            mode: Literal["hybrid", "vector", "bm25"] = "hybrid",
     ) -> list[tuple[str, float, Chunk]]:
         """Return the top n (chunk_id, score, chunk) results for query."""
+        ...
+
+
+class Reranker(Protocol):
+    def rerank(
+            self,
+            query: str,
+            candidates: list[tuple[str, float, Chunk]],
+            top_k: int,
+    ) -> list[tuple[str, float, Chunk]]:
+        """Re-score the candidates and return the best top_k, the best first."""
         ...

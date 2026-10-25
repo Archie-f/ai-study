@@ -3,10 +3,14 @@ from typing import Literal
 from chromadb import QueryResult
 from sentence_transformers import SentenceTransformer
 
-from rag_notes.fixed_chunker import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP, chunk_fixed_size, chunk_fixed_size_document
+from rag_notes.fixed_chunker import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP, chunk_text_fixed_size, chunk_fixed_size_document, \
+    SAFE_CHUNK_SIZE
 from rag_notes.models import SourceDocument, Chunk, EmbeddedChunk, RetrievalIndex
-from rag_notes.retrieval import search
+from rag_notes.protocols import Reranker
+from rag_notes.reranker import pick_top_by_score, drop_below_threshold
+from rag_notes.retrieval import search, search_with_rerank
 from rag_notes.structure_chunker import BOUNDARY_STYLES, chunk_document
+from rag_notes.structure_then_size_chunker import chunk_document_structure_then_size
 from rag_notes.vector_store import COLLECTION_NAME, get_collection, add_chunks, get_query_result, delete_collection
 
 
@@ -40,10 +44,44 @@ class FixedSizeChunker:
         """
         paragraph_texts = [paragraph[0] for paragraph in document.paragraphs]
         doc_text = "\n".join(paragraph_texts)
-        chunk_texts = chunk_fixed_size(doc_text, self.n, self.o)
+        chunk_texts = chunk_text_fixed_size(doc_text, self.n, self.o)
         return chunk_fixed_size_document(
             chunk_texts,
             document.metadata
+        )
+
+
+class StructureThenSizeChunker:
+    def __init__(
+            self,
+            tokenizer,
+            limit: int,
+            boundary_styles: set[str] = BOUNDARY_STYLES,
+            n: int = SAFE_CHUNK_SIZE,
+            o: int = DEFAULT_OVERLAP,
+    ):
+        self.tokenizer = tokenizer
+        self.limit = limit
+        self.boundary_styles = boundary_styles
+        self.n = n
+        self.o = o
+
+    def chunk(self, document: SourceDocument) -> list[Chunk]:
+        """Chunk a document by using structure chunking first and then re-chunk the chunks that have
+        number of WordPiece tokens over the given limit.
+
+        Args:
+            document (SourceDocument): The document to chunk.
+        Returns:
+            list[Chunk]: A list of Chunks.
+        """
+        return chunk_document_structure_then_size(
+            document=document,
+            tokenizer=self.tokenizer,
+            limit=self.limit,
+            boundary_styles=self.boundary_styles,
+            n=self.n,
+            o=self.o
         )
 
 
@@ -114,3 +152,73 @@ class HybridRetriever:
             n,
             mode
         )
+
+
+class RerankingRetriever:
+    def __init__(
+            self,
+            retrieval_index: RetrievalIndex,
+            reranker: Reranker,
+            min_score: float,
+            n_candidates: int = 20,
+    ):
+        self.retrieval_index = retrieval_index
+        self.reranker = reranker
+        self.min_score = min_score
+        self.n_candidates = n_candidates
+
+    def search(
+            self,
+            query: str,
+            n: int = 3,
+            mode: Literal["hybrid", "vector", "bm25"] = "hybrid",
+    ) -> list[tuple[str, float, Chunk]]:
+        """Search, rerank the candidates and drop results below min_score.
+
+        Args:
+            query: The query to search for.
+            n: How many reranked results to keep before the threshold is applied.
+            mode: First-stage search mode (hybrid, vector, bm25).
+        Returns:
+            up to n (chunk_id, rerank_score, chunk) tuples, the best first, all with
+            score >= min_score; empty if none qualifies
+        """
+        results = search_with_rerank(
+            retrieval_index=self.retrieval_index,
+            reranker=self.reranker,
+            query=query,
+            n_candidates=self.n_candidates,
+            top_k=n,
+            mode=mode,
+        )
+        return drop_below_threshold(results, self.min_score)
+
+
+class CrossEncoderReranker:
+    """Reranker backed by a cross-encoder model (anything with predict(pairs))."""
+
+    def __init__(self, model):
+        self.model = model
+
+    def rerank(
+            self,
+            query: str,
+            candidates: list[tuple[str, float, Chunk]],
+            top_k: int
+    ) -> list[tuple[str, float, Chunk]]:
+        """Re-score candidates with the cross-encoder and keep the best top_k.
+
+        Args:
+            query: the user's question
+            candidates: (chunk_id, old_score, chunk) tuples as returned by search()
+            top_k: how many results to keep
+        Returns:
+            up to top_k (chunk_id, reranker_score, chunk) tuples, highest score first
+        """
+        if not candidates:
+            return []
+
+        pairs = [(query, chunk.text) for _, _, chunk in candidates]
+        scores = [float(score) for score in self.model.predict(pairs)]
+
+        return pick_top_by_score(candidates, scores, top_k)
