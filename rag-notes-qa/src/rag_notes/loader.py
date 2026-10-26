@@ -60,7 +60,7 @@ def load_corpus(notes_root: Path) -> list[SourceDocument]:
     comprehensive_notes: str = "AI-Study-Comprehensive-Notes.docx"
     documents: list[SourceDocument] = []
 
-    for filename in notes_root.rglob("*"):
+    for filename in sorted(notes_root.rglob("*")):
         file_name = filename.name
         file_suffix = filename.suffix
         is_comprehensive_notes = file_name == comprehensive_notes
