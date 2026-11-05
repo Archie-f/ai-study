@@ -1,0 +1,11 @@
+# Only what the root tests/ and src/llm_compare need. CI used to install
+# requirements.txt, which pulls PyTorch through sentence-transformers and made the
+# install step take 10+ minutes for code that never imports it.
+anthropic>=0.40.0
+groq>=0.11.0
+openai>=1.50.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+matplotlib
+pytest>=8.0.0
+ruff==0.17.4
