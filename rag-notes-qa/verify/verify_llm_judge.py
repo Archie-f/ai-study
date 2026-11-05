@@ -6,13 +6,12 @@ from config import PERSIST_PATH, EVAL_CORPUS_PATH, GOLDEN_QA_PATH
 from llm_compare.providers.anthropic_provider import AnthropicProvider
 from llm_compare.providers.base import LLMProvider
 from llm_compare.providers.openai_provider import OpenAIProvider
-from rag_notes.adapters import StructureChunker, ChromaVectorStore
+from rag_notes.adapters import ChromaVectorStore
 from rag_notes.generate import build_context, generate_answer, normalize_answer, GUARDRAIL_ANSWER
 from rag_notes.llm_judge import judge_answer
-from rag_notes.models import RetrievalIndex, JudgeResult
+from rag_notes.models import JudgeResult
 from rag_notes.pipeline import build_default_retriever
 from rag_notes.protocols import Retriever
-from rag_notes.retrieval import search, build_retrieval_index
 
 
 provider_llm = OpenAIProvider()

@@ -26,7 +26,7 @@ def build_eval_summary(
     result_dict["mrr_by_mode"] = mrr_by_mode
     result_dict["recall_by_mode"] = recall_by_mode
 
-    passed = sum(1 for result in judge_results if result.passed == True)
+    passed = sum(1 for result in judge_results if result.passed)
     result_dict["passed"] = passed
 
     total = len(judge_results)

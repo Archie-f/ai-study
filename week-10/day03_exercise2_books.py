@@ -1,4 +1,3 @@
-import re
 
 from rag_notes.bm25_index import tokenize, build_doc_frequencies
 

@@ -3,7 +3,6 @@ from pathlib import Path
 
 from config import get_notes_root, PERSIST_PATH
 from llm_compare.providers.base import LLMProvider
-from llm_compare.providers.ollama_provider import OllamaProvider
 from llm_compare.providers.openai_provider import OpenAIProvider
 from rag_notes.adapters import ChromaVectorStore
 from rag_notes.generate import answer_question, GUARDRAIL_ANSWER

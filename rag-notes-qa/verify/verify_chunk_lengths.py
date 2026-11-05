@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from config import EVAL_CORPUS_PATH
-from rag_notes.adapters import StructureChunker, StructureThenSizeChunker
+from rag_notes.adapters import StructureThenSizeChunker
 from rag_notes.embedder import wordpiece_counts, load_embedding_model
 from rag_notes.protocols import Chunker
 from rag_notes.retrieval import collect_chunks
