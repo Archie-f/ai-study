@@ -48,6 +48,7 @@ python week-02/hello_llm.py
 | Week 15 | RAG comparison — Protocols wired, frozen eval corpus, chunking & retrieval-mode comparison | Done   |
 | Week 16 | Chunk-level retrieval evaluation, 48-question golden set + validator, Phase 3 retro      | Done   |
 | Week 17 | RAG hardening — token-window-safe chunker, cross-encoder reranker, relevance threshold   | Done   |
+| Week 18 | Bare-API agent — tool-calling loop, tool-call rate, stop_reason                          | Done   |
 
 ## What I Learned
 ### Week 01
@@ -182,3 +183,11 @@ python week-02/hello_llm.py
 - Calibrated the relevance threshold on all 48 questions, not on the 8 I had looked at first; the first sample's minimum (2.56) would have thrown away about a quarter of the answerable questions
 - Learned that tables are comparable only if they use the same cutoffs: changing `k_values` changed how many results were fetched and silently changed hybrid's order
 - The full eval now reads: judge pass rate 77% (37/48); 10 of the 11 failures are "I don't know", mostly paraphrased questions whose right chunk never reached the reranker — the next problem to solve
+
+### Week 18
+- Made rebuilds independent of the order the file system returns the corpus files (`load_corpus()` now sorts them, with a test that reverses `rglob` and fails without the sort). Chroma's approximate search still differed from an exact search on at most 2 of 48 questions (one chunk each); the cause is not found, and I skipped the insertion-order experiment because the effect is below the run-to-run noise
+- Measured instead of assuming: ties in the fused ranking cross the 20-candidate cut in 17-18 of 48 questions, yet three tie rules gave the same 40 / 35 / 27 and MRR 0.631, so production stayed unchanged
+- Saw that more candidates can raise first-stage recall (40 -> 44 right chunks in the list) without any end-to-end gain (top 5 stayed 35, MRR 0.631 -> 0.623): a better first stage only helps if the reranker can use it
+- Built an agent without a framework: the model answers with text or asks for a tool, my code runs the tool and calls the model again, with a step limit (`max_steps`) so a model that keeps asking cannot loop forever; tested with a fake client that replays scripted responses
+- Measured how often the model actually searches: with a description that did not name the notes' topics it searched for about 72% of the 48 notes questions (35, 34, 34); naming the topics took it to 98% (47 of 48, three runs) with no false searches on 6 off-topic questions. The model decides from the question and the tool description alone, so the description is part of the program
+- Returned `stop_reason` in the result instead of raising: the caller decides what a cut-off or refused answer means, at the cost that a caller that never checks sees a refusal as a normal answer

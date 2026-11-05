@@ -128,6 +128,15 @@ package itself never reads paths or environment variables — callers pass them 
   (`build_judge_prompt`, `clean_result`, `normalize_score`, `judge_answer`)
 - `src/rag_notes/eval_report.py` — builds the self-contained HTML eval report
   (`build_full_eval_html`, `save_full_eval_html`)
+- `src/rag_notes/agent.py` — a tool-calling agent on the bare Anthropic API, no
+  framework: the model either answers or asks for the `search_notes` tool
+  (`SEARCH_NOTES_TOOL`), `run_tool` runs it against any `Retriever` and never
+  raises (bad input and exceptions become error results), and `run_agent(question,
+  client, retriever, llm_model, max_steps=5, max_tokens=1024, tool=None)` loops
+  until the model replies with text. It returns an `AgentResult` (answer, steps,
+  token totals, `tool_calls`, `stop_reason`) and raises `AgentStepLimitError` when
+  the model still wants tools after `max_steps` calls. Helpers: `parse_tool_uses`,
+  `make_tool_result_message`. Not wired into `ask.py`
 - `config.py` — script-side configuration: shared paths and `get_notes_root()`
 - `ask.py` — CLI entry point: asks a question, prints the answer with its
   citations (`display_answer`)
@@ -136,7 +145,11 @@ package itself never reads paths or environment variables — callers pass them 
   `verify_retrieval.py`, `verify_guardrail.py`, `verify_retrieval_eval.py`,
   `verify_chunking_eval.py`, `verify_llm_judge.py`, `verify_full_eval.py`,
   `verify_golden_qa.py`, `verify_rerank_eval.py`, `verify_rerank_scores.py`,
-  `verify_threshold_calibration.py`) —
+  `verify_threshold_calibration.py`, the Week 18 measurement scripts
+  `verify_hnsw_vs_exact.py`, `verify_rrf_ties.py`, `verify_tie_options.py`,
+  `verify_first_stage_recall.py`, `verify_candidate_options.py`,
+  `verify_candidate_rerank.py`, and the agent scripts `run_agent_manual.py` and
+  `verify_agent_tool_use.py`, which call the Anthropic API) —
   distinct from `tests/`, which is fast and dependency-free. The evaluation
   scripts (`*_eval.py`, `verify_llm_judge.py`) build from the frozen corpus; the
   demo scripts build from the live notes under `NOTES_ROOT`
@@ -158,7 +171,9 @@ package itself never reads paths or environment variables — callers pass them 
   with a fake vector store, RRF tie-breaking and zero-score filtering
   (`test_hybrid_search.py`, `test_bm25_index.py`), the chunking-comparison
   table (`test_chunking_eval.py`), and the golden-set validator
-  (`test_golden_qa.py`)
+  (`test_golden_qa.py`), `agent.py` with a fake client that replays scripted
+  responses (`test_agent.py`) and the tool-call-rate helper
+  (`test_verify_agent_tool_use.py`)
 - `compare_chunkers.py` — runs both chunkers over one document and prints their
   output side by side
 - `main.py` — loads the full corpus and structure-chunks every document
@@ -183,6 +198,10 @@ python -m verify.verify_rerank_eval            # struct+sz baseline vs. with cro
 python -m verify.verify_threshold_calibration  # reranker score of the right chunk for all 48 questions + threshold table
 python -m verify.verify_full_eval              # retrieval metrics + LLM judge for the default pipeline -> HTML report
 python ask.py --question "What is RRF?"  # end-to-end answer over the live notes
+python -m verify.run_agent_manual         # three hand questions through the agent (real API; prints steps, tokens, queries)
+python -m verify.verify_agent_tool_use    # tool-call rate on the 48 golden questions + 6 off-topic controls, old vs new tool description
+python -m verify.verify_first_stage_recall  # rank of the right chunk per ranker at depth 100
+python -m verify.verify_candidate_rerank  # candidate depth/cut options through the real reranker
 ```
 
 ## Status
@@ -324,3 +343,34 @@ Week 17 hardened retrieval, measured at chunk level on the frozen corpus
   prompt into its citations.
 
 Tagged `v0.17.0` (MINOR: new capability — chunker, reranker, threshold).
+
+Week 18 measured four things on the frozen corpus (48 questions; every number
+from at least two runs) and built the bare-API agent.
+
+- Index stability: `load_corpus()` now sorts the file list, so a rebuild no longer
+  depends on the order the file system returns files (test: reversed `rglob`
+  fails without the sort). Chroma's top 20 differed from an exact search on 0-2
+  of 48 questions, one chunk each (cause not found; the insertion-order
+  experiment was skipped because the effect is below the run-to-run noise).
+- RRF ties: every question has tied scores and a tie crosses the 20|21 cut in
+  17-18 of 48; the id tie-break favoured some files. Three rules (id order,
+  vector side first, keep every tied item) gave the same candidates / top 5 /
+  rank 1 = 40 / 35 / 27 and MRR 0.631, so production is unchanged
+  (`keep_tied_at_cut` stays in `verify_tie_options.py`).
+- First-stage recall: with each ranker looking 100 deep the right chunk is in the
+  merged top 20 for 42 of 48 questions (production: 40), in the top 40 for 44.
+  Through the real reranker the top 5 still holds 35 and MRR stays at 0.62-0.63,
+  so production is unchanged; the paraphrase misses q004, q024, q034 and q040 need
+  query rewriting or a better embedding model.
+- Agent: `agent.py` as described under Structure (67 tests in `test_agent.py`).
+  With a tool description that did not name the notes' topics the model searched
+  for about 72% of the 48 notes questions (35, 34, 34 of 48) and for 1 of 6
+  off-topic controls; with the topics listed it searched for 47 of 48 in three runs
+  and for none of the controls. No system prompt was needed. Three questions hit
+  the step limit over the runs (the model keeps searching when it cannot find the
+  answer) and the error does not carry the queries it tried.
+- Known limits: answer quality against the golden answers was not measured for the
+  agent; the topic list is written by hand and has to follow the notes; the agent
+  is tied to the Anthropic request format (Week 19 ports it to LangGraph).
+
+Tagged `v0.18.0` (MINOR: new capability — bare-API agent).

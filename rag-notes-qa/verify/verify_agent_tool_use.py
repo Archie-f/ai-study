@@ -62,7 +62,7 @@ def main():
     for c_quest in CONTROL_QUESTIONS:
         c_quests.append(("controls", c_quest))
 
-    tools = [("new", None)]
+    tools = [("old", OLD_TOOL), ("new", None)]
     for label, tool in tools:
         print(f"Verifying {label}:")
         rows = []
