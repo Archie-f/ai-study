@@ -329,3 +329,103 @@ def test_answer_on_the_last_allowed_step_is_not_an_error():
 def test_max_steps_one_with_tool_request_raises():
     with pytest.raises(AgentStepLimitError):
         run([tool_response(tool_block("t1", query="RRF"))], max_steps=1)
+
+
+def test_no_tool_call_gives_empty_tool_calls():
+    result, _, _ = run([final_response()])
+    assert result.tool_calls == []
+
+
+def test_tool_calls_record_name_and_input_without_id():
+    first = tool_response(tool_block("t1", query="RRF", n=3))
+    result, _, _ = run([first, final_response()])
+    assert result.tool_calls == [("search_notes", {"query": "RRF", "n": 3})]
+
+
+def test_tool_calls_of_all_rounds_are_kept_in_order():
+    responses = [
+        tool_response(tool_block("t1", query="a")),
+        tool_response(tool_block("t2", query="b")),
+        final_response(),
+    ]
+    result, _, _ = run(responses)
+    assert [c[1]["query"] for c in result.tool_calls] == ["a", "b"]
+
+
+def test_two_tools_in_one_response_keep_their_order():
+    first = tool_response(tool_block("t1", query="a"), tool_block("t2", query="b"))
+    result, _, _ = run([first, final_response()])
+    assert [c[1]["query"] for c in result.tool_calls] == ["a", "b"]
+
+
+def test_failed_tool_call_is_still_recorded():
+    first = tool_response(tool_block("t1", name="delete_all"))
+    result, _, _ = run([first, final_response()])
+    assert result.tool_calls == [("delete_all", {})]
+
+
+def test_each_run_gets_its_own_tool_calls_list():
+    r1, _, _ = run([tool_response(tool_block("t1", query="a")), final_response()])
+    r2, _, _ = run([final_response()])
+    assert r1.tool_calls != r2.tool_calls
+    assert r2.tool_calls == []
+
+
+def test_custom_tool_is_sent_on_every_call_instead_of_the_default():
+    custom = {**SEARCH_NOTES_TOOL, "description": "other description"}
+    _, calls, _ = run([tool_response(tool_block("t1", query="RRF")), final_response()], tool=custom)
+    assert len(calls) == 2
+    for call in calls:
+        assert call["tools"] == [custom]
+        assert call["tools"][0]["description"] == "other description"
+
+
+def test_tool_none_uses_search_notes_tool():
+    _, calls, _ = run([final_response()], tool=None)
+    assert calls[0]["tools"] == [SEARCH_NOTES_TOOL]
+
+
+def test_custom_tool_does_not_change_the_default_tool():
+    before = dict(SEARCH_NOTES_TOOL)
+    run([final_response()], tool={**SEARCH_NOTES_TOOL, "description": "x"})
+    assert SEARCH_NOTES_TOOL == before
+    _, calls, _ = run([final_response()])
+    assert calls[0]["tools"] == [SEARCH_NOTES_TOOL]
+
+
+def test_end_turn_gives_stop_reason_end_turn():
+    result, _, _ = run([final_response()])
+    assert result.stop_reason == "end_turn"
+
+
+def test_max_tokens_keeps_the_partial_text_and_reports_the_reason():
+    r = response([text_block("The answer is cut o")], "max_tokens")
+    result, _, _ = run([r])
+    assert result.answer == "The answer is cut o"
+    assert result.stop_reason == "max_tokens"
+
+
+def test_refusal_is_returned_not_raised():
+    r = response([text_block("I can't help with that.")], "refusal")
+    result, _, _ = run([r])
+    assert result.stop_reason == "refusal"
+    assert result.answer == "I can't help with that."
+
+
+@pytest.mark.parametrize("reason", ["stop_sequence", "pause_turn"])
+def test_other_stop_reasons_are_passed_through(reason):
+    result, _, _ = run([response([text_block("x")], reason)])
+    assert result.stop_reason == reason
+
+
+def test_stop_reason_is_the_one_of_the_last_response_after_tool_rounds():
+    responses = [tool_response(tool_block("t1", query="RRF")), response([text_block("cut")], "max_tokens")]
+    result, _, _ = run(responses)
+    assert result.steps == 2
+    assert result.stop_reason == "max_tokens"
+
+
+def test_tool_use_responses_do_not_leak_into_stop_reason():
+    responses = [tool_response(tool_block("t1", query="RRF")), final_response()]
+    result, _, _ = run(responses)
+    assert result.stop_reason == "end_turn"

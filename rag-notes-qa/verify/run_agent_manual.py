@@ -20,6 +20,12 @@ QUESTIONS = [
 
 
 def main() -> None:
+    """Run each question through run_agent once and print the results.
+
+    Prints a table (type, steps, tokens, whether the tool was called, the
+    queries the model sent), then each answer. A question that hits the step
+    limit is reported and skipped. Needs a real API key and the built index.
+    """
     vector_store = ChromaVectorStore(PERSIST_PATH)
     retriever = build_default_retriever(EVAL_CORPUS_PATH, vector_store)
 
@@ -34,7 +40,8 @@ def main() -> None:
                     "answer": agent_result.answer,
                     "steps": agent_result.steps,
                     "tokens_in": agent_result.tokens_in,
-                    "tokens_out": agent_result.tokens_out
+                    "tokens_out": agent_result.tokens_out,
+                    "tool_calls": agent_result.tool_calls
                     }
                 }
             )
@@ -42,15 +49,18 @@ def main() -> None:
             results.append(f"{q_type}: {e}")
 
     print()
-    print(f"{'type':<14}{'steps':>6}{'tokens_in':>11}{'tokens_out':>12}{'tool':>6}")
-    print("-" * 49)
+    print(f"{'type':<14}{'steps':>6}{'tokens_in':>11}{'tokens_out':>12}{'tool':>6}  queries")
+    print("-" * 90)
     for item in results:
         if isinstance(item, str):
             print(item)
             continue
         for q_type, r in item.items():
-            tool_called = "yes" if r["steps"] > 1 else "no"
-            print(f"{q_type:<14}{r['steps']:>6}{r['tokens_in']:>11}{r['tokens_out']:>12}{tool_called:>6}")
+            tool_called = "yes" if r["tool_calls"] else "no"
+            queries = " | ".join(str(tool_input.get("query")) for _, tool_input in r["tool_calls"]) or "-"
+            if len(queries) > 40:
+                queries = queries[:37] + "..."
+            print(f"{q_type:<14}{r['steps']:>6}{r['tokens_in']:>11}{r['tokens_out']:>12}{tool_called:>6}  {queries}")
 
     for item in results:
         if isinstance(item, str):
