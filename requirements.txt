@@ -11,3 +11,4 @@ tiktoken
 sentence-transformers
 numpy
 chromadb
+langgraph
