@@ -41,6 +41,6 @@ if "__main__" == __name__:
                 {"messages": [HumanMessage("What is RRF?")]},
                 config={"recursion_limit": limit}
             )
-        except GraphRecursionError as err:
+        except GraphRecursionError:
             print(f"Model is called '{model.calls}' times."
             f"Retriever ran '{retriever.runs}' times.")

@@ -132,8 +132,8 @@ def run_langgraph_agent(
     graph = build_agent_graph(llm, retriever, tool)
     try:
         final_state = graph.invoke(
-            {"messages": [HumanMessage(question)]},
-            config={"recursion_limit": 2 * max_steps},
+            {"messages": [HumanMessage(question)]},     # type: ignore
+            config={"recursion_limit": 2 * max_steps},        # type: ignore
         )
     except GraphRecursionError as err:
         raise AgentStepLimitError(f"Model still requested tools after {max_steps} steps") from err
