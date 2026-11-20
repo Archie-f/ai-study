@@ -49,6 +49,7 @@ python week-02/hello_llm.py
 | Week 16 | Chunk-level retrieval evaluation, 48-question golden set + validator, Phase 3 retro      | Done   |
 | Week 17 | RAG hardening — token-window-safe chunker, cross-encoder reranker, relevance threshold   | Done   |
 | Week 18 | Bare-API agent — tool-calling loop, tool-call rate, stop_reason                          | Done   |
+| Week 19 | LangGraph port of the agent, fake-model tests, framework comparison                      | Done   |
 
 ## What I Learned
 ### Week 01
@@ -191,3 +192,12 @@ python week-02/hello_llm.py
 - Built an agent without a framework: the model answers with text or asks for a tool, my code runs the tool and calls the model again, with a step limit (`max_steps`) so a model that keeps asking cannot loop forever; tested with a fake client that replays scripted responses
 - Measured how often the model actually searches: with a description that did not name the notes' topics it searched for about 72% of the 48 notes questions (35, 34, 34); naming the topics took it to 98% (47 of 48, three runs) with no false searches on 6 off-topic questions. The model decides from the question and the tool description alone, so the description is part of the program
 - Returned `stop_reason` in the result instead of raising: the caller decides what a cut-off or refused answer means, at the cost that a caller that never checks sees a refusal as a normal answer
+
+### Week 19
+- Learned LangGraph on toy graphs first (no model): the state is one shared dict, a node returns only the keys it changes, a reducer (`Annotated[list, operator.add]`) makes a field grow instead of being replaced, and a conditional edge asks a router function where to go next
+- Ported the Week 18 agent to LangGraph with LangChain's chat model and message types: two nodes (`call_model`, `run_tools`) and a router, with the model and the retriever reaching the nodes as closures. The port reuses `run_tool`, so both agents share the same tool behaviour
+- Measured instead of guessing that `recursion_limit` counts node runs, not model calls: one round is two node runs, so `2 * max_steps` stops exactly where the bare-API agent stops (5 model calls, 5 searches)
+- Running every draft with fake models found eleven bugs before any API call, three of them silent (an error result sent as success, a router after the wrong node that ended the graph before the tool ran, and a `tool` argument that was set but never bound)
+- Wrote 12 tests with a fake chat model that plays back scripted answers; breaking the source 12 ways, all 12 were caught
+- Measured both agents on the same 48 notes questions and 6 off-topic controls, three runs: the bare-API agent searched for 143 of 144, the LangGraph port for 142 of 144, and neither searched for any control (0 of 18 each). One question apart: the port behaves like the original
+- Compared LangGraph with Microsoft Agent Framework and CrewAI at reading level and chose LangGraph for Project #3: it continues the tested loop and exposes the loop Project #3 has to change; CrewAI does not install on Python 3.14
