@@ -2,10 +2,12 @@ import os
 
 import anthropic
 from dotenv import load_dotenv
+from langchain_anthropic import ChatAnthropic
 
 from config import PERSIST_PATH, EVAL_CORPUS_PATH
 from rag_notes.adapters import ChromaVectorStore
 from rag_notes.agent import run_agent, AgentStepLimitError
+from rag_notes.agent_langgraph import run_langgraph_agent
 from rag_notes.pipeline import build_default_retriever
 
 load_dotenv()
@@ -20,53 +22,62 @@ QUESTIONS = [
 
 
 def main() -> None:
-    """Run each question through run_agent once and print the results.
+    """Run each question through both agents once and print the results.
 
-    Prints a table (type, steps, tokens, whether the tool was called, the
-    queries the model sent), then each answer. A question that hits the step
-    limit is reported and skipped. Needs a real API key and the built index.
+    The bare-API agent (run_agent) and the LangGraph agent
+    (run_langgraph_agent) get the same retriever, the same questions and
+    the same max_tokens. Prints one table (agent, type, steps, tokens,
+    whether the tool was called, the queries the model sent), then each
+    answer. A question that hits the step limit is reported and skipped.
+    Needs a real API key and the built index.
     """
     vector_store = ChromaVectorStore(PERSIST_PATH)
     retriever = build_default_retriever(EVAL_CORPUS_PATH, vector_store)
+    llm = ChatAnthropic(model=llm_model, max_tokens=1024)       # type: ignore
+    agents = [
+        ("bare-api", lambda quest: run_agent(quest, client, retriever, llm_model)),
+        ("langgraph", lambda quest: run_langgraph_agent(quest, llm, retriever)),
+    ]
 
     results = []
-    for q_type, question in QUESTIONS:
-        try:
-            agent_result = run_agent(question, client, retriever, llm_model)
-            results.append(
-                {
-                q_type:
+    for agent_name, ask_agent in agents:
+        for q_type, question in QUESTIONS:
+            try:
+                agent_result = ask_agent(question)
+                results.append(
                     {
-                    "answer": agent_result.answer,
-                    "steps": agent_result.steps,
-                    "tokens_in": agent_result.tokens_in,
-                    "tokens_out": agent_result.tokens_out,
-                    "tool_calls": agent_result.tool_calls
+                    (agent_name, q_type):
+                        {
+                        "answer": agent_result.answer,
+                        "steps": agent_result.steps,
+                        "tokens_in": agent_result.tokens_in,
+                        "tokens_out": agent_result.tokens_out,
+                        "tool_calls": agent_result.tool_calls
+                        }
                     }
-                }
-            )
-        except AgentStepLimitError as e:
-            results.append(f"{q_type}: {e}")
+                )
+            except AgentStepLimitError as e:
+                results.append(f"{agent_name} / {q_type}: {e}")
 
     print()
-    print(f"{'type':<14}{'steps':>6}{'tokens_in':>11}{'tokens_out':>12}{'tool':>6}  queries")
-    print("-" * 90)
+    print(f"{'agent':<11}{'type':<14}{'steps':>6}{'tokens_in':>11}{'tokens_out':>12}{'tool':>6}  queries")
+    print("-" * 100)
     for item in results:
         if isinstance(item, str):
             print(item)
             continue
-        for q_type, r in item.items():
+        for (agent_name, q_type), r in item.items():
             tool_called = "yes" if r["tool_calls"] else "no"
             queries = " | ".join(str(tool_input.get("query")) for _, tool_input in r["tool_calls"]) or "-"
             if len(queries) > 40:
                 queries = queries[:37] + "..."
-            print(f"{q_type:<14}{r['steps']:>6}{r['tokens_in']:>11}{r['tokens_out']:>12}{tool_called:>6}  {queries}")
+            print(f"{agent_name:<11}{q_type:<14}{r['steps']:>6}{r['tokens_in']:>11}{r['tokens_out']:>12}{tool_called:>6}  {queries}")
 
     for item in results:
         if isinstance(item, str):
             continue
-        for q_type, r in item.items():
-            print(f"\n[{q_type}]\n{r['answer']}")
+        for (agent_name, q_type), r in item.items():
+            print(f"\n[{agent_name} / {q_type}]\n{r['answer']}")
 
 
 if __name__ == "__main__":

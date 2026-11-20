@@ -11,3 +11,6 @@ tiktoken
 sentence-transformers
 numpy
 chromadb
+langgraph
+langchain-anthropic
+langchain-core

@@ -137,6 +137,15 @@ package itself never reads paths or environment variables — callers pass them 
   token totals, `tool_calls`, `stop_reason`) and raises `AgentStepLimitError` when
   the model still wants tools after `max_steps` calls. Helpers: `parse_tool_uses`,
   `make_tool_result_message`. Not wired into `ask.py`
+- `src/rag_notes/agent_langgraph.py` — the same agent on LangGraph with
+  LangChain's chat model (`ChatAnthropic`) and message types:
+  `route_after_model` (router), `build_agent_graph(llm, retriever, tool=None)`
+  (nodes `call_model` and `run_tools` as closures; `run_tools` reuses
+  `run_tool`, so both agents share the tool behaviour) and
+  `run_langgraph_agent(question, llm, retriever, max_steps=5, tool=None)`, which
+  returns the same `AgentResult`. `recursion_limit = 2 * max_steps` (node runs,
+  two per round), and `GraphRecursionError` is raised as `AgentStepLimitError`.
+  The caller creates the model, so tests pass a fake
 - `config.py` — script-side configuration: shared paths and `get_notes_root()`
 - `ask.py` — CLI entry point: asks a question, prints the answer with its
   citations (`display_answer`)
@@ -149,7 +158,7 @@ package itself never reads paths or environment variables — callers pass them 
   `verify_hnsw_vs_exact.py`, `verify_rrf_ties.py`, `verify_tie_options.py`,
   `verify_first_stage_recall.py`, `verify_candidate_options.py`,
   `verify_candidate_rerank.py`, and the agent scripts `run_agent_manual.py` and
-  `verify_agent_tool_use.py`, which call the Anthropic API) —
+  `verify_agent_tool_use.py`, which run both agents and call the Anthropic API) —
   distinct from `tests/`, which is fast and dependency-free. The evaluation
   scripts (`*_eval.py`, `verify_llm_judge.py`) build from the frozen corpus; the
   demo scripts build from the live notes under `NOTES_ROOT`
@@ -172,8 +181,9 @@ package itself never reads paths or environment variables — callers pass them 
   (`test_hybrid_search.py`, `test_bm25_index.py`), the chunking-comparison
   table (`test_chunking_eval.py`), and the golden-set validator
   (`test_golden_qa.py`), `agent.py` with a fake client that replays scripted
-  responses (`test_agent.py`) and the tool-call-rate helper
-  (`test_verify_agent_tool_use.py`)
+  responses (`test_agent.py`), `agent_langgraph.py` with a fake chat model that
+  plays back scripted `AIMessage`s (`test_agent_langgraph.py`) and the
+  tool-call-rate helper (`test_verify_agent_tool_use.py`)
 - `compare_chunkers.py` — runs both chunkers over one document and prints their
   output side by side
 - `main.py` — loads the full corpus and structure-chunks every document
@@ -198,8 +208,8 @@ python -m verify.verify_rerank_eval            # struct+sz baseline vs. with cro
 python -m verify.verify_threshold_calibration  # reranker score of the right chunk for all 48 questions + threshold table
 python -m verify.verify_full_eval              # retrieval metrics + LLM judge for the default pipeline -> HTML report
 python ask.py --question "What is RRF?"  # end-to-end answer over the live notes
-python -m verify.run_agent_manual         # three hand questions through the agent (real API; prints steps, tokens, queries)
-python -m verify.verify_agent_tool_use    # tool-call rate on the 48 golden questions + 6 off-topic controls, old vs new tool description
+python -m verify.run_agent_manual         # three hand questions through both agents (real API; prints steps, tokens, queries)
+python -m verify.verify_agent_tool_use    # tool-call rate of both agents on the 48 golden questions + 6 off-topic controls
 python -m verify.verify_first_stage_recall  # rank of the right chunk per ranker at depth 100
 python -m verify.verify_candidate_rerank  # candidate depth/cut options through the real reranker
 ```
@@ -374,3 +384,28 @@ from at least two runs) and built the bare-API agent.
   is tied to the Anthropic request format (Week 19 ports it to LangGraph).
 
 Tagged `v0.18.0` (MINOR: new capability — bare-API agent).
+
+Week 19 ported the agent to LangGraph and compared the two.
+
+- Port: `agent_langgraph.py` as described under Structure (12 tests in
+  `test_agent_langgraph.py`; breaking the source 12 ways, all 12 were caught).
+- Tool-call rate, new description, `claude-haiku-4-5`, three runs (48 notes
+  questions / 6 off-topic controls):
+
+  | Agent | notes called | controls called |
+  |---|---|---|
+  | bare-API (`run_agent`) | 48, 47, 48 (143 of 144) | 0, 0, 0 |
+  | LangGraph (`run_langgraph_agent`) | 47, 47, 48 (142 of 144) | 0, 0, 0 |
+
+  One question apart over 144: the port behaves like the original. The only
+  repeating miss is a Week 01 logistics question that retrieval cannot find;
+  over six agent runs it got three step limits, two skipped searches and one
+  normal call, so it is a retrieval problem, not a framework one. The topic list
+  in the tool description was written from this corpus (in-sample); the
+  controls are the untuned part.
+- Known limits: answer quality against the golden answers is still not measured
+  for either agent; `AgentStepLimitError` still does not carry the queries tried;
+  the LangGraph agent reads ChatAnthropic's `usage_metadata` and `stop_reason`,
+  which another provider may leave empty.
+
+Tagged `v0.19.0` (MINOR: new capability — LangGraph agent).

@@ -1,0 +1,21 @@
+Exercise 1 — read a loop as a graph
+Below is a small loop from a different domain. Do not write code.
+
+Write four short lines:
+State: the field names the nodes share, and which ones grow instead of being replaced.
+Nodes: one name per step.
+Edges: the plain arrows, written as a -> b.
+Router: after which node the decision happens, and each value it can return with the node it leads to (or END).
+
+The scenario: a support-ticket script. classify reads the ticket text and sets a category.
+If the category is unknown and fewer than 2 attempts have been made, ask_details adds a clarifying question
+to a history list and the script classifies again. Otherwise, the script goes to done and stops.
+
+Expected shape of your answer: exactly the four lines State / Nodes / Edges / Router.
+There is no single right wording, but a loop must show up as an arrow that goes backwards.
+
+
+State: ticket_text (text), category (text), attempts (int), history (list). Only "history" grows, others are replaced with the new values.
+Nodes: classify, ask_details, done£
+Edges: START -> classify, ask_details -> classify, done -> END
+Router: After classify, "retry" (category unknown and attempts < 2) -> ask_details; "finish" (otherwise) -> done

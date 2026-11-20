@@ -4,10 +4,12 @@ from itertools import chain
 
 import anthropic
 from dotenv import load_dotenv
+from langchain_anthropic import ChatAnthropic
 
 from config import GOLDEN_QA_PATH, PERSIST_PATH, EVAL_CORPUS_PATH
 from rag_notes.adapters import ChromaVectorStore
 from rag_notes.agent import SEARCH_NOTES_TOOL, run_agent, AgentStepLimitError
+from rag_notes.agent_langgraph import run_langgraph_agent
 from rag_notes.pipeline import build_default_retriever
 
 
@@ -48,8 +50,14 @@ def main():
     load_dotenv()
     client = anthropic.Anthropic()
     llm_model = os.environ["ANTHROPIC_MODEL_NAME"]
+    llm = ChatAnthropic(model=llm_model, max_tokens=1024)               # type: ignore
     vector_store = ChromaVectorStore(PERSIST_PATH)
     retriever = build_default_retriever(EVAL_CORPUS_PATH, vector_store)
+
+    agents = [
+        ("bare-api", lambda q, t: run_agent(q, client, retriever, llm_model, tool=t)),
+        ("langgraph", lambda q, t: run_langgraph_agent(q, llm, retriever, tool=t)),
+    ]
 
     with open(GOLDEN_QA_PATH, "r") as f:
         golden_qa_list = json.load(f)
@@ -62,49 +70,44 @@ def main():
     for c_quest in CONTROL_QUESTIONS:
         c_quests.append(("controls", c_quest))
 
-    tools = [("old", OLD_TOOL), ("new", None)]
-    for label, tool in tools:
-        print(f"Verifying {label}:")
-        rows = []
-        hit_step_limit = {}
-        missed = []
-        false_alarms = []
-        for group, question in chain(n_quests, c_quests):
-            try:
-                agent_result = run_agent(
-                    question=question,
-                    client=client,
-                    retriever=retriever,
-                    llm_model=llm_model,
-                    tool=tool
-                )
-                tool_called = len(agent_result.tool_calls) > 0
-                rows.append((group, tool_called))
+    tools = [("new", None)]
+    for agent_name, ask_agent in agents:
+        for label, tool in tools:
+            print(f"Verifying {agent_name} / {label}:")
+            rows = []
+            hit_step_limit = {}
+            missed = []
+            false_alarms = []
+            for group, question in chain(n_quests, c_quests):
+                try:
+                    agent_result = ask_agent(question, tool)
+                    tool_called = len(agent_result.tool_calls) > 0
+                    rows.append((group, tool_called))
 
-                if group == "notes" and not tool_called:
-                    missed.append(question)
+                    if group == "notes" and not tool_called:
+                        missed.append(question)
 
-                if group == "controls" and tool_called:
-                    false_alarms.append(question)
+                    if group == "controls" and tool_called:
+                        false_alarms.append(question)
 
-            except AgentStepLimitError:
-                rows.append((group, True))
-                hit_step_limit[group] = hit_step_limit.get(group, 0) + 1
-                print(f"Hit step limit:: {question}")
+                except AgentStepLimitError:
+                    rows.append((group, True))
+                    hit_step_limit[group] = hit_step_limit.get(group, 0) + 1
+                    print(f"{agent_name} hit step limit: {question}")
 
-        call_rates = tool_call_rates(rows)
+            call_rates = tool_call_rates(rows)
 
-        for group, (called, total) in call_rates.items():
-            main_text = f"{label} / {group}: {called}/{total} called "
-            skipped_text = f"({hit_step_limit.get(group)} hit step limit)" if hit_step_limit.get(group) is not None else ""
-            print(f"{main_text} {skipped_text}")
+            for group, (called, total) in call_rates.items():
+                main_text = f"{agent_name} / {label} / {group}: {called}/{total} called "
+                skipped_text = f"({hit_step_limit.get(group)} hit step limit)" if hit_step_limit.get(group) is not None else ""
+                print(f"{main_text} {skipped_text}")
 
-        print("\nMissed Questions:")
-        print("\n".join(missed))
+            print(f"\n{agent_name} / {label} - missed questions:")
+            print("\n".join(missed))
 
-        print("\nFalse Alarms:")
-        print("\n".join(false_alarms))
-        print()
+            print(f"\n{agent_name} / {label} - false alarms:")
+            print("\n".join(false_alarms))
+            print()
 
 
 if __name__ == "__main__":
